@@ -150,6 +150,21 @@
     }
 }
 
+@layer components {
+    /* Enforce black text when alpha is used as background */
+    .bg-alpha {
+        background-color: var(--color-alpha) !important;
+        color: #000000 !important;
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Hover state: Dark background with alpha text */
+    .bg-alpha:hover {
+        background-color: var(--color-dark_gray) !important;
+        color: var(--color-alpha) !important;
+    }
+}
+
 /* Custom Scrollbars */
 .custom-scrollbar::-webkit-scrollbar {
     height: 8px;

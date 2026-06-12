@@ -66,6 +66,7 @@ The AI **must not**:
 ---
 
 ## Component Rules (UI Development)
+* **Folder Structure & Routing**: Pages and views must be structured using `index` files (e.g., `index.jsx`), which can have a `partials/` folder nested directly alongside them for local subcomponents. Dynamic routes must use `id` for naming (e.g., `[id]`).
 * **Default to Reuse**: Look in `resources/js/components/` and `resources/js/components/ui/` for existing solutions first.
 * **Single Responsibility**: Keep new components focused on a single job.
 * **Keep Logic Simple**: Write straightforward React state and effect logic. Do not add complex state managers unless approved.
