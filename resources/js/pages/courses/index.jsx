@@ -15,9 +15,12 @@ import CourseModal from './partials/CourseModal';
 import CourseReviewModal from './partials/CourseReviewModal';
 import {
     computeCourseStats,
+    courseFilterOptions,
+    courseSortOptions,
     courseStatus,
     courseStatusLabel,
     courseStatusStyles,
+    courseViewOptions,
     defaultSort,
     defaultView,
     emptyCourseForm,
@@ -27,9 +30,10 @@ import {
 } from './partials/courseHelpers';
 
 const catalogPreferencesKey = 'courses.catalog.preferences';
-const validSortValues = ['recently_active', 'date_posted'];
-const validViewModes = ['banners', 'cards'];
-const validStatusFilters = ['all', 'draft', 'assigned', 'archived'];
+const optionValues = (options) => options.map((option) => option.value);
+const validSortValues = optionValues(courseSortOptions);
+const validViewModes = optionValues(courseViewOptions);
+const validStatusFilters = optionValues(courseFilterOptions);
 
 const readCatalogPreferences = () => {
     if (typeof window === 'undefined') {
