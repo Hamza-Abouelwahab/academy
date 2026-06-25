@@ -28,7 +28,7 @@ const Cards = ({img, promo,classNum, formation, date, coach, studentsNum ,...pro
                     </p>
                 </CardHeader>
             </Card>
-        </>
+         </>
     );
 };
 
