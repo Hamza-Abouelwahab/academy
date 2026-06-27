@@ -6,6 +6,7 @@ use App\Models\Social;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 
+use function Illuminate\Log\log;
 
 class GetSocialsService
 {

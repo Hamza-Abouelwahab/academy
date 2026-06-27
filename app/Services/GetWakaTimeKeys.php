@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\WakaTime;
 use Illuminate\Support\Facades\Http;
 
-
+use function Illuminate\Log\log;
 
 class GetWakaTimeKeys
 {
