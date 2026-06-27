@@ -115,12 +115,14 @@ class ClassController extends Controller
         }
         if ($students) {
             foreach ($students as $key => $student) {
-                  $data["students"][$key]["id"] = $student->id;
+                $data["students"][$key]["id"] = $student->id;
                 $data["students"][$key]["name"] = $student->name;
                 $data["students"][$key]["avatar"] = $student->avatar;
                 $data["students"][$key]["field"] = $student->field;
                 $data["students"][$key]["status"] = $student->status;
-                $data["students"][$key]["promo"] = $student->promo;
+                $data["students"][$key]["promo"] = $class->promo;
+                $data["students"][$key]["type"] = $class->type;
+                $data["students"][$key]["class"] = $class->class;
                 $data["students"][$key]["email"] = $student->email;
             }
         }

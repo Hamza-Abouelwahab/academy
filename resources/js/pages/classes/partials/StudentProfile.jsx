@@ -43,12 +43,56 @@
 
 import { useState, useEffect } from "react";
 import {
-  Trophy, Flame, Star, Clock, BookOpen, Award,
-  Mail, Gift, BookMarked, CheckCircle2,
-  Target, Layers, Zap, Brain, Plus, Minus,
-  MessageSquare, Camera, Pencil, Code2,
-  MessageCircle, Briefcase, ChevronLeft,
+  Trophy,
+  Flame,
+  Star,
+  Clock,
+  BookOpen,
+  Award,
+  Mail,
+  Gift,
+  BookMarked,
+  CheckCircle2,
+  Target,
+  Layers,
+  Zap,
+  Brain,
+  Plus,
+  Minus,
+  MessageSquare,
+  Camera,
+  Pencil,
+  Code2,
+  Shield,
+  Briefcase,
+  ChevronLeft,
+  TrendingUp,
 } from "lucide-react";
+
+
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+ 
+  CartesianGrid,
+} from "recharts";
+
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 
 const A = "#F4B400";
 const AD = "#c49000";
@@ -56,10 +100,12 @@ const AD = "#c49000";
 function getInitials(name = "") {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 }
-
-function Card({ children, className = "" }) {
+function Card({ children, className = "", style = {} }) {
   return (
-    <div className={`bg-white border border-gray-100 rounded-2xl ${className}`}>
+    <div
+      className={`bg-white border rounded-2xl ${className}`}
+      style={style}
+    >
       {children}
     </div>
   );
@@ -100,6 +146,7 @@ function Avatar({ src, name, className = "" }) {
 
 export default function StudentProfile({ student, onBack }) {
 
+    console.log(student);
   const s = {
     xp:           student.xp          ?? "8,357",
     level:        student.level        ?? 14,
@@ -124,7 +171,71 @@ export default function StudentProfile({ student, onBack }) {
     coding_hours: student.coding_hours ?? "551.6h",
     posts:        student.posts        ?? 0,
   };
+const velocityData = [
+  { week: "WK 01", xp: 60 },
+  { week: "WK 02", xp: 68 },
+  { week: "WK 03", xp: 66 },
+  { week: "WK 04", xp: 82 },
+  { week: "WK 05", xp: 81 },
+  { week: "WK 06", xp: 92 },
+];
 
+
+
+
+const monthLabels = [
+  { name: "Jul", week: 0 },
+  { name: "Aug", week: 4 },
+  { name: "Sep", week: 8 },
+  { name: "Oct", week: 13 },
+  { name: "Nov", week: 17 },
+  { name: "Dec", week: 22 },
+  { name: "Jan", week: 26 },
+  { name: "Feb", week: 31 },
+  { name: "Mar", week: 35 },
+  { name: "Apr", week: 40 },
+  { name: "May", week: 44 },
+  { name: "Jun", week: 49 },
+];
+
+
+
+const heatColor = (level) => {
+  switch (level) {
+    case 0: return "#F5F5F4";
+    case 1: return "#FEF3C7";
+    case 2: return "#FCD34D";
+    case 3: return "#F4B400";
+    case 4: return "#B45309";
+    default: return "#F5F5F4";
+  }
+};
+
+
+
+
+const xpBreakdown = [
+  {
+    name: "Quizzes",
+    value: 2400,
+    color: "#F4B400",
+  },
+  {
+    name: "Exercises",
+    value: 1800,
+    color: "#D9A000",
+  },
+  {
+    name: "Projects",
+    value: 3100,
+    color: "#A97800",
+  },
+  {
+    name: "Challenges",
+    value: 1057,
+    color: "#E5E7EB",
+  },
+];
   const roadmap = [
     { name: "HTML City",          pct: 100 },
     { name: "CSS Island",         pct: 100 },
@@ -180,115 +291,229 @@ export default function StudentProfile({ student, onBack }) {
     { icon: "🎯", bg: "bg-blue-50 border-blue-100",  title: "Recommended next course",  body: "Advanced JavaScript Patterns — available in catalog. Estimated completion: 3 weeks at current pace."                 },
   ];
 
+
+const skillData = [
+  { subject: "Frontend", value: 85 },
+  { subject: "Backend", value: 78 },
+  { subject: "Database", value: 82 },
+  { subject: "AI", value: 40 },
+  { subject: "Design", value: 75 },
+];
+
   return (
-    <div className="flex flex-col gap-8 pb-16">
+    <div className="flex flex-col gap-8 pb-16 ">
 
       {/* ══════════════════════════════════════
           1. HERO
       ══════════════════════════════════════ */}
-      <div className="rounded-2xl overflow-hidden bg-white border border-gray-100">
-
-        {/* Banner */}
-        {/* <div className="relative h-48 bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center opacity-10">
-            <div
-              className="w-38 h-48"
-              style={{
-                clipPath: "polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)",
-                background: "white",
-              }}
-            />
-          </div> */}
+<div className="rounded-3xl overflow-hidden border bg-gradient-to-b from-[#FFF7DD] via-[#FAF8F3] to-[#F2F2F2]">
+       
           <button
             onClick={onBack}
             className="absolute top-5 left-6 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition backdrop-blur-sm"
           >
             <ChevronLeft size={15} /> Back
           </button>
-          {/* <button className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
-            <Camera size={15} />
-          </button> */}
-        {/* </div> */}
-
         {/* Info */}
-        <div className="px-8 pb-6">
-          <div className="flex items-end justify-between pt-8 mb-5">
-<div className="h-28 w-28 overflow-hidden rounded-full border border-neutral-200">
-    <img
-        src={student.avatar}
-        alt={student.name}
-        className="h-full w-full object-cover object-top"
-    />
-</div>
-            <button
-              className="mb-1 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
-              style={{ background: A }}
-            >
-              <Pencil size={14} /> Edit Profile
-            </button>
-          </div>
+<div className="flex gap-8 px-8 py-8">
+<div className="flex-1">
+ {/* Avatar */}
+    <div className="mt-8">
+        <div className="h-32 w-32 overflow-hidden rounded-full border border-neutral-200">
+            <img
+                src={student.avatar}
+                alt={student.name}
+                className="h-full w-full object-cover object-top"
+            />
+        </div>
+    </div>
+<div>
 
-          <h2 className="text-2xl font-bold text-gray-900">{student.name}</h2>
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-sm text-gray-500">{s.promotion}</span>
-            <span className="w-1 h-1 rounded-full bg-gray-300" />
-            <span className="text-xs font-semibold px-3 py-0.5 rounded-full text-white" style={{ background: A }}>
-              Studying
+    <h2 className="text-3xl font-bold text-gray-900">
+        {student.name}
+    </h2>
+
+    <p className="mt-1 text-gray-500">
+        {student.email}
+    </p>
+
+    <div className="flex items-center gap-2 mt-4">
+        <span className="text-sm text-gray-500">
+         Promo {student.promo} • {student.type} {student.class}
+        </span>
+
+        <span className="w-1 h-1 rounded-full bg-gray-300"/>
+
+        <span
+            className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+            style={{ background: A }}
+        >
+           {student.status}
+        </span>
+    </div>
+
+   
+
+    {/* NEW */}
+    <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-6">
+    {[
+        { label: "XP", value: s.xp, color: "text-[#F4B400]" },
+        { label: "Level", value: s.level, color: "text-neutral-900" },
+        { label: "Lessons", value: s.lessons, color: "text-neutral-900" },
+        { label: "Exercises", value: s.exercises, color: "text-neutral-900" },
+        { label: "Quizzes", value: s.quizzes, color: "text-neutral-900" },
+        { label: "Projects", value: s.projects, color: "text-neutral-900" },
+        { label: "Badges", value: s.badges, color: "text-neutral-900" }
+    ].map((stat, i) => (
+        <div key={i} className="flex flex-col gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                {stat.label}
             </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1.5">
-            <Clock size={12} />
-            <span>Last login: {s.last_active}</span>
-          </div>
+            <span className={`text-lg font-semibold ${stat.color}`}>
+                {stat.value}
+            </span>
+        </div>
+    ))}
+</div>
+
+<div className="mt-8 pt-6 border-t border-neutral-100 flex items-center gap-2 text-[11px] text-neutral-400 font-medium">
+    <Clock size={12}/>
+    <span>Last login : {s.last_active}</span>
+</div>
+
+</div>
+   
+
+</div>
+<div className="w-[420px] shrink-0">
+    <Section title="Skill Mastery">
+<Card
+    className="p-6 flex justify-center items-center border border-[#E8D28A]"
+   
+>
+            <div className="w-[360px] h-[360px]">
+
+                <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart
+                        cx="50%"
+                        cy="50%"
+                        outerRadius="68%"
+                        data={skillData}
+                    >
+
+                        <PolarGrid />
+
+                        <Tooltip
+                            cursor={{ fill: "rgba(244,180,0,0.06)" }}
+                            contentStyle={{
+                                background: "#fff",
+                                border: "1px solid #F3F4F6",
+                                borderRadius: "10px",
+                                boxShadow: "0 8px 20px rgba(0,0,0,.08)",
+                            }}
+                            formatter={(value) => [`${value}%`, "Mastery"]}
+                        />
+
+                        <PolarAngleAxis
+                            dataKey="subject"
+                            tick={{
+                                fill: "#111827",
+                                fontSize: 13,
+                                fontWeight: 500,
+                            }}
+                        />
+
+                        <PolarRadiusAxis
+                            domain={[0,100]}
+                            tick={false}
+                            axisLine={false}
+                        />
+
+                        <Radar
+                            dataKey="value"
+                            stroke="#8B6B00"
+                            fill="#F4B400"
+                            fillOpacity={0.35}
+                            strokeWidth={4}
+                        />
+
+                    </RadarChart>
+                </ResponsiveContainer>
+
+            </div>
+
+        </Card>
+    </Section>
+</div>
         </div>
 
         {/* Quick stats bar */}
-        <div className="border-t border-gray-100 grid grid-cols-4 divide-x divide-gray-100">
-          {[
-            { icon: <Trophy size={20} />,       label: "Global Rank",  value: s.global_rank ?? "—" },
-            { icon: <Code2 size={20} />,         label: "Coding Hours", value: s.coding_hours },
-            { icon: <MessageCircle size={20} />, label: "Level",        value: String(s.level) },
-            { icon: <Briefcase size={20} />,     label: "Projects",     value: String(s.projects) },
-          ].map(({ icon, label, value }) => (
-            <div key={label} className="flex items-center gap-4 px-6 py-5">
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0" style={{ background: A }}>
-                <span className="text-white">{icon}</span>
-              </div>
-              <div>
-                <p className="text-xl font-bold leading-none" style={{ color: value === "—" || value === "0" ? "#D1D5DB" : A }}>
-                  {value}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">{label}</p>
-              </div>
+<div className="border-t  px-8 py-6">
+    <div className="grid grid-cols-4 gap-5">
+
+        {[
+            { icon: <Trophy size={20} />, label: "Global Rank", value: s.global_rank ?? "—" },
+            { icon: <Code2 size={20} />, label: "Coding Hours", value: s.coding_hours },
+            { icon: <Shield size={20} />, label: "Level", value: String(s.level) },
+            { icon: <Briefcase size={20} />, label: "Projects", value: String(s.projects) },
+        ].map(({ icon, label, value }) => (
+
+  <div
+    key={label}
+    className="
+        flex items-center gap-4
+        px-6 py-5
+        rounded-2xl
+        -translate-y-1
+        shadow-lg
+        transition-all duration-500
+        hover:-translate-y-2
+        hover:shadow-xl
+        hover:scale-[1.00]
+        cursor-default
+        animate-[fadeIn_.3s_ease]
+    "
+>
+                <div
+    className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm"
+    style={{
+        background: "#FFC801",
+        boxShadow: "0 8px 20px rgba(255,200,1,.18)",
+    }}
+>
+                    <span className="text-white">
+                        {icon}
+                    </span>
+                </div>
+
+                <div className="flex flex-col">
+                   <p className="text-2xl font-bold text-neutral-900 leading-none">
+    {value}
+</p>
+
+                   <p className="text-xs text-neutral-400 mt-1 font-medium">
+    {label}
+</p>
+                </div>
             </div>
-          ))}
-        </div>
+
+        ))}
+
+    </div>
+</div>
       </div>
 
-      {/* ══════════════════════════════════════
-          2. MINI STATS BAR
-      ══════════════════════════════════════ */}
-      <Card className="overflow-hidden">
-        <div className="grid grid-cols-9 divide-x divide-gray-100">
-          {[
-            { icon: <Star size={14} />,     label: "XP",         value: s.xp },
-            { icon: <Trophy size={14} />,   label: "Level",      value: `Lv ${s.level}` },
-            { icon: <Flame size={14} />,    label: "Streak",     value: `${s.streak}d` },
-            { icon: <Clock size={14} />,    label: "Study Time", value: s.study_time },
-            { icon: <BookOpen size={14} />, label: "Lessons",    value: s.lessons },
-            { icon: <Target size={14} />,   label: "Exercises",  value: s.exercises },
-            { icon: <Brain size={14} />,    label: "Quizzes",    value: s.quizzes },
-            { icon: <Layers size={14} />,   label: "Projects",   value: s.projects },
-            { icon: <Award size={14} />,    label: "Badges",     value: s.badges },
-          ].map(({ icon, label, value }) => (
-            <div key={label} className="flex flex-col items-center justify-center py-4 gap-1">
-              <span style={{ color: A }}>{icon}</span>
-              <p className="font-bold text-sm leading-none">{value}</p>
-              <p className="text-[10px] text-gray-400 leading-none">{label}</p>
-            </div>
-          ))}
-        </div>
-      </Card>
+
+
+
+
+
+
+
+
+
+
+      
 
       {/* ══════════════════════════════════════
           3. COACH ACTIONS
@@ -326,7 +551,7 @@ export default function StudentProfile({ student, onBack }) {
       {/* ══════════════════════════════════════
           4. LEARNING HEALTH
       ══════════════════════════════════════ */}
-      <Section title="Learning Health">
+      {/* <Section title="Learning Health">
         <div className="grid grid-cols-4 gap-4">
           {[
             { title: "Learning Health Index", value: `${s.lhi}%`,         sub: "Quiz scores, streaks & attendance combined.", red: false },
@@ -351,7 +576,173 @@ export default function StudentProfile({ student, onBack }) {
             </Card>
           ))}
         </div>
-      </Section>
+      </Section> */}
+      <Section title="Learning Health">
+  <div className="grid grid-cols-4 gap-3">
+    {[
+      { title: "LHI", value: `${s.lhi}%`, sub: "Quiz, streak & attendance." },
+      { title: "Consistency", value: `${s.consistency}%`, sub: "Weekly activity frequency." },
+      { title: "Engagement", value: `${s.engagement}%`, sub: "Videos & exercises rate." },
+      { title: "Dropout Risk", value: `${s.dropout_risk}%`, sub: "Risk factor analysis." },
+    ].map(({ title, value, sub }, i) => {
+      const isRed = i === 3; // Dropout risk index
+      return (
+        <Card key={title} className={`p-4 border-none shadow-none bg-neutral-50/50 ${isRed ? "!bg-red-50/30" : ""}`}>
+          <div className="flex flex-col">
+            <span className={`text-[9px] font-bold uppercase tracking-[0.2em] ${isRed ? "text-red-400" : "text-neutral-400"}`}>
+              {title}
+            </span>
+            <span className={`text-2xl font-black mt-1 ${isRed ? "text-red-500" : "text-neutral-900"}`}>
+              {value}
+            </span>
+            <span className="text-[10px] text-neutral-400 mt-1 leading-snug">
+              {sub}
+            </span>
+          </div>
+        </Card>
+      );
+    })}
+  </div>
+</Section>
+
+
+
+
+
+
+<section className="flex items-stretch gap-6">
+<div className="w-[700px] shrink-0">
+<Card className="h-full p-6 rounded-3xl border border-neutral-200">
+  <div className="flex items-center justify-between mb-6">
+    <h3 className="text-xl font-semibold text-neutral-900">
+      Learning Velocity
+    </h3>
+
+    <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#F4B400]/40 bg-[#FFF9E8]">
+      <TrendingUp size={15} color="#F4B400" />
+      <span className="text-sm font-semibold text-[#C49000]">
+        +24% vs Last Month
+      </span>
+    </div>
+  </div>
+
+  <div className="h-[250px]">
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={velocityData}>
+        <defs>
+          <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#F4B400" stopOpacity={0.30} />
+            <stop offset="100%" stopColor="#F4B400" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+
+        <XAxis
+          dataKey="week"
+          tick={{ fill: "#9CA3AF", fontSize: 13 }}
+          tickLine={false}
+          axisLine={false}
+        />
+
+        <YAxis hide />
+
+        <Tooltip
+          cursor={false}
+          contentStyle={{
+            borderRadius: 12,
+            border: "1px solid #F3F4F6",
+            boxShadow: "0 10px 25px rgba(0,0,0,.08)",
+          }}
+        />
+
+        <Area
+          type="monotone"
+          dataKey="xp"
+          stroke="#C49000"
+          strokeWidth={3}
+          fill="url(#velocityGradient)"
+          dot={false}
+          activeDot={{
+            r: 5,
+            fill: "#F4B400",
+          }}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>
+</Card>
+</div>
+
+<div className="w-[420px]">
+
+    {/* XP */}
+     <Card className="h-full p-6 rounded-3xl border border-neutral-200 flex flex-col">
+      <h3 className="text-base font-semibold mb-5">
+        XP Breakdown
+      </h3>
+
+      <ResponsiveContainer width="100%" height={180}>
+        <PieChart>
+          <Pie
+            data={xpBreakdown}
+            dataKey="value"
+            innerRadius={55}
+            outerRadius={78}
+            paddingAngle={3}
+          >
+            {xpBreakdown.map((item, index) => (
+              <Cell
+                key={index}
+                fill={item.color}
+              />
+            ))}
+          </Pie>
+
+          <Tooltip formatter={(v) => [`${v} XP`]} />
+        </PieChart>
+      </ResponsiveContainer>
+
+      <div className="space-y-3 mt-4">
+        {xpBreakdown.map((item) => (
+          <div
+            key={item.name}
+            className="flex items-center justify-between text-sm"
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className="w-3 h-3 rounded-full"
+                style={{ background: item.color }}
+              />
+              <span className="text-gray-500">
+                {item.name}
+              </span>
+            </div>
+
+            <span className="font-semibold">
+              {item.value} XP
+            </span>
+          </div>
+        ))}
+      </div>
+    </Card>
+
+   
+
+
+   
+
+</div>
+
+</section>
+
+
+
+
+
+
+
+
+
+ 
 
       {/* ══════════════════════════════════════
           5. LEARNING JOURNEY
@@ -389,7 +780,7 @@ export default function StudentProfile({ student, onBack }) {
       {/* ══════════════════════════════════════
           6. CODING TIME
       ══════════════════════════════════════ */}
-      <Section title="Coding Time">
+      {/* <Section title="Coding Time">
         <div className="grid grid-cols-4 gap-4">
           {[
             { label: "Today",        value: s.coding_today },
@@ -426,7 +817,8 @@ export default function StudentProfile({ student, onBack }) {
             ))}
           </div>
         </Card>
-      </Section>
+      </Section> */}
+
 
       {/* ══════════════════════════════════════
           7. PROJECTS + BADGES
@@ -550,7 +942,7 @@ export default function StudentProfile({ student, onBack }) {
       {/* ══════════════════════════════════════
           9. COACH INSIGHTS
       ══════════════════════════════════════ */}
-      <Section title="Coach Insights">
+      {/* <Section title="Coach Insights">
         <div className="grid grid-cols-3 gap-4">
           <div className="col-span-2 flex flex-col gap-3">
             {insights.map(({ icon, bg, title, body }) => (
@@ -610,7 +1002,7 @@ export default function StudentProfile({ student, onBack }) {
             </div>
           </div>
         </div>
-      </Section>
+      </Section> */}
 
     </div>
                 
