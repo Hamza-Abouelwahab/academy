@@ -69,7 +69,7 @@ function getInitials(name = "") {
 function Card({ children, className = "", style = {},  background = true, }) {
     return (
         <div
- className={`${background ? "bg-white" : ""} border rounded-2xl ${className}`}
+ className={`${background ? "bg-white" : ""}   dark:border-[#2C2C2C] border rounded-2xl ${className}`}
              style={style}
         >
             {children}
@@ -368,15 +368,26 @@ console.log("grid", grid);
 
     return (
         <div className="flex flex-col gap-8 pb-16 ">
+              <button
+                    onClick={onBack}
+  className="flex items-center gap-2  w-fit px-4 py-2 rounded-xl bg-[#ffc801] hover:bg-black hover:text-[#ffc801] text-black text-sm font-medium transition-all duration-300   "                >
+                    <ChevronLeft size={15} /> Back
+                </button>
 
-            <div className="rounded-3xl overflow-hidden border bg-gradient-to-b from-[#FFF7DD] via-[#FAF8F3] to-[#F2F2F2]">
+            <div className="rounded-3xl overflow-hidden border bg-gradient-to-b from-[#FFF7DD] via-[#FAF8F3] to-[#F2F2F2] dark:from-[#362e19]
+    dark:via-[#24211B]
+    dark:to-[#1A1A1A]
 
-                <button
+    dark:border-[#5C4A13]
+    dark:shadow-[0_15px_45px_rgba(0,0,0,.05)]
+    dark:text-white">
+
+                {/* <button
                     onClick={onBack}
                     className="absolute top-14 left-6 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#ffc801] hover:bg-black hover:text-[#ffc801] text-black text-sm font-medium transition backdrop-blur-sm"
                 >
                     <ChevronLeft size={15} /> Back
-                </button>
+                </button> */}
                 {/* Info */}
                 <div className="flex gap-8 px-8 py-8">
                     <div className="flex-1">
@@ -393,23 +404,23 @@ console.log("grid", grid);
                         </div>
                         <div>
 
-                            <h2 className="text-3xl font-bold text-gray-900">
+                            <h2 className="text-3xl font-bold text-gray-900  dark:text-white">
                                 {student.name}
                             </h2>
 
-                            <p className="mt-1 text-gray-500">
+                            <p className="mt-1 text-gray-500 dark:text-gray-400">
                                 {student.email}
                             </p>
 
                             <div className="flex items-center gap-2 mt-4">
-                                <span className="text-sm text-gray-500">
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
                                     Promo {student.promo} • {student.type} {student.class}
                                 </span>
 
                                 <span className="w-1 h-1 rounded-full bg-gray-300" />
 
                                 <span
-                                    className="px-3 py-1 rounded-full text-xs font-semibold text-black"
+                                    className="px-3 py-1 rounded-full text-xs font-semibold text-black  dark:text-white"
                                     style={{ background: A }}
                                 >
                                     {student.status}
@@ -430,17 +441,21 @@ console.log("grid", grid);
                                     { label: "Badges", value: s.badges, color: "text-neutral-900" }
                                 ].map((stat, i) => (
                                     <div key={i} className="flex flex-col gap-1">
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
                                             {stat.label}
                                         </span>
-                                        <span className={`text-lg font-semibold ${stat.color}`}>
+                                        <span className={`text-lg font-semibold ${
+        stat.color === "text-neutral-900"
+            ? "text-neutral-900 dark:text-white"
+            : stat.color
+    }`}>
                                             {stat.value}
                                         </span>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="mt-8 pt-6 border-t border-neutral-100 flex items-center gap-2 text-[11px] text-neutral-400 font-medium">
+                            <div className="mt-8 pt-6 border-t border-neutral-100  dark:border-neutral-700 flex items-center gap-2 text-[11px] text-neutral-400 font-medium">
                                 <Clock size={12} />
                                 <span>Last login : {s.last_active}</span>
                             </div>
@@ -489,7 +504,7 @@ console.log("grid", grid);
                                             <PolarAngleAxis
                                                 dataKey="subject"
                                                 tick={{
-                                                    fill: "#111827",
+                                                    fill: "#111827" ,
                                                     fontSize: 13,
                                                     fontWeight: 500,
                                                 }}
