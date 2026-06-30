@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\WakaTimeController;
 
 Route::inertia('/', 'welcome/index')->name('home');
 
@@ -12,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 
+Route::get("/wakatime/{user}", [WakaTimeController::class, "show"]);
 
 require __DIR__."/admin/management.php";
 require __DIR__."/admin/classes.php";

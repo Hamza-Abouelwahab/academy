@@ -19,7 +19,7 @@ export default function ClasseDetails({ courses = [] , data }) {
 
             {/* //^^ chabab  import your component here tawa7d maycodi hna  khdmo dakchi  fl partials then  importiwh   */}
 
- <ClassDetails students={data.students} />
+ <ClassDetails students={data.students}  coach={data.coach} />
         </AppLayout>
     );
 }

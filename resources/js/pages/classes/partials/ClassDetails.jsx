@@ -1,262 +1,7 @@
-// export default function ClassDetails({ students = [] }) {
-//     return (
-//         <div className="mt-6 rounded-xl bg-white p-6 shadow">
-//             <h2 className="mb-4 text-xl font-semibold">
-//                 Students
-//             </h2>
-
-//             <div className="space-y-3">
-//                 {students.map((student) => (
-//                     <div
-//                         key={student.id}
-//                         className="flex items-center justify-between rounded-lg border p-4"
-//                     >
-//                         <div>
-//                             <h3>{student.name}</h3>
-//                             <p className="text-sm text-gray-500">
-//                                 {student.email}
-//                             </p>
-//                         </div>
-
-//                         <span>
-//                             Level {student.level}
-//                         </span>
-//                     </div>
-//                 ))}
-//             </div>
-//         </div>
-//     );
-// }
-
-
-
-
-
-
-
-
-
-// import { useState } from "react";
-// import { MoreVertical, Plus, X } from "lucide-react";
-
-// const TABS = [
-//   { id: "students", label: "Students" },
-//   { id: "streams", label: "Recorded streams" },
-//   { id: "assignments", label: "Programme weekly" },
-//   { id: "resources", label: "Resources" },
-// ];
-
-// export default function ClassDetails({ students = [] }) {
-//   const [activeTab, setActiveTab] = useState("students");
-//   const [selectedStudent, setSelectedStudent] = useState(null);
-
-//   return (
-//     <div className="flex gap-4">
-//       {/* LEFT PANEL */}
-//       <div className="flex-1 bg-white rounded-2xl border border-neutral-200 min-w-0">
-//         {/* Tabs */}
-//         <div className="flex gap-7 px-6 border-b border-neutral-200">
-//           {TABS.map((tab) => (
-//             <button
-//               key={tab.id}
-//               onClick={() => setActiveTab(tab.id)}
-//               className={`py-4 text-sm border-b-2 transition-colors ${
-//                 activeTab === tab.id
-//                   ? "border-[#F4B400] font-medium text-black"
-//                   : "border-transparent text-neutral-500"
-//               }`}
-//             >
-//               {tab.label}
-//             </button>
-//           ))}
-//         </div>
-
-//         {/* Students Tab */}
-//         {activeTab === "students" && (
-//           <>
-//             <div className="flex items-center justify-between px-6 py-5">
-//               <span className="text-base font-medium text-black">
-//                 Active roster{" "}
-//                 <span className="font-normal text-neutral-400">
-//                   {students.length} students
-//                 </span>
-//               </span>
-//               <button className="flex items-center gap-1.5 text-[#F4B400] text-sm font-medium">
-//                 <Plus size={15} />
-//                 Add student
-//               </button>
-//             </div>
-
-//             <div className="px-6 pb-6 overflow-x-auto">
-//               <table className="w-full">
-//                 <thead>
-//                   <tr className="border-b border-neutral-100">
-//                     <th className="text-left py-3 text-xs font-medium text-neutral-400 uppercase tracking-wide">
-//                       Student
-//                     </th>
-//                     <th className="text-left py-3 text-xs font-medium text-neutral-400 uppercase tracking-wide">
-//                       Email
-//                     </th>
-//                     <th className="text-left py-3 text-xs font-medium text-neutral-400 uppercase tracking-wide">
-//                       Actions
-//                     </th>
-//                   </tr>
-//                 </thead>
-//                 <tbody>
-//                   {students.map((student) => (
-//                     <tr
-//                       key={student.id}
-//                       onDoubleClick={() => setSelectedStudent(student)}
-//                       className="border-b border-neutral-100 hover:bg-neutral-50 cursor-pointer transition-colors"
-//                     >
-//                       <td className="py-4">
-//                         <div className="flex items-center gap-3">
-//                           <div className="w-9 h-9 rounded-full bg-[#F4B400] text-white flex items-center justify-center font-medium text-sm flex-shrink-0">
-//                             {student.name?.charAt(0)}
-//                           </div>
-//                           <span className="text-sm font-medium text-black">
-//                             {student.name}
-//                           </span>
-//                         </div>
-//                       </td>
-//                       <td className="text-sm text-neutral-500">
-//                         {student.email}
-//                       </td>
-//                       <td>
-//                         <button className="text-neutral-400 hover:text-black transition-colors">
-//                           <MoreVertical size={16} />
-//                         </button>
-//                       </td>
-//                     </tr>
-//                   ))}
-//                   {students.length === 0 && (
-//                     <tr>
-//                       <td
-//                         colSpan={3}
-//                         className="text-center py-12 text-sm text-neutral-400"
-//                       >
-//                         No students yet
-//                       </td>
-//                     </tr>
-//                   )}
-//                 </tbody>
-//               </table>
-//             </div>
-//           </>
-//         )}
-
-//         {activeTab !== "students" && (
-//           <div className="p-6 text-sm text-neutral-400">Coming soon</div>
-//         )}
-//       </div>
-
-//       {/* RIGHT SIDEBAR */}
-//       {selectedStudent && (
-//         <div className="w-[340px] bg-white rounded-2xl border border-neutral-200 p-5 h-fit sticky top-4 flex-shrink-0">
-//           <div className="flex justify-end mb-3">
-//             <button
-//               onClick={() => setSelectedStudent(null)}
-//               className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400 transition-colors"
-//             >
-//               <X size={16} />
-//             </button>
-//           </div>
-
-//           {/* Header */}
-//           <div className="flex flex-col items-center gap-2">
-//             <div className="w-20 h-20 rounded-full bg-[#F4B400] text-white flex items-center justify-center text-2xl font-medium">
-//               {selectedStudent.name?.charAt(0)}
-//             </div>
-//             <p className="text-base font-medium text-black">
-//               {selectedStudent.name}
-//             </p>
-//             <p className="text-sm text-neutral-500">{selectedStudent.email}</p>
-//           </div>
-
-//           {/* Stats */}
-//           <div className="grid grid-cols-2 gap-2.5 mt-5">
-//             {[
-//               { label: "XP", value: "8,450" },
-//               { label: "Level", value: "12" },
-//               { label: "Streak", value: "24 days" },
-//               { label: "Badges", value: "15" },
-//             ].map(({ label, value }) => (
-//               <div key={label} className="bg-neutral-50 rounded-xl p-3">
-//                 <p className="text-xs text-neutral-400">{label}</p>
-//                 <p className="text-lg font-medium text-black">{value}</p>
-//               </div>
-//             ))}
-//           </div>
-
-//           {/* Progress */}
-//           <div className="mt-5">
-//             <div className="flex justify-between mb-2">
-//               <span className="text-sm text-black">Learning progress</span>
-//               <span className="text-sm font-medium text-black">75%</span>
-//             </div>
-//             <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-//               <div className="h-full w-[75%] bg-[#F4B400] rounded-full" />
-//             </div>
-//           </div>
-
-//           {/* Activity */}
-//           <div className="mt-5">
-//             <p className="text-sm font-medium text-black mb-3">
-//               Recent activity
-//             </p>
-//             <div className="space-y-2">
-//               {[
-//                 { title: "Completed React module", time: "2 hours ago" },
-//                 { title: "Earned 150 XP", time: "Yesterday" },
-//                 { title: "Submitted assignment", time: "3 days ago" },
-//               ].map(({ title, time }) => (
-//                 <div key={title} className="bg-neutral-50 rounded-xl p-3">
-//                   <p className="text-sm font-medium text-black">{title}</p>
-//                   <p className="text-xs text-neutral-400">{time}</p>
-//                 </div>
-//               ))}
-//             </div>
-//           </div>
-
-//           {/* Actions */}
-//           <div className="mt-5 flex flex-col gap-2">
-//             <button className="bg-[#F4B400] text-white py-2.5 rounded-xl text-sm font-medium">
-//               View full profile
-//             </button>
-//             <button className="border border-neutral-200 py-2.5 rounded-xl text-sm font-medium text-black">
-//               Send message
-//             </button>
-//             <button className="border border-neutral-200 py-2.5 rounded-xl text-sm font-medium text-black">
-//               Add XP
-//             </button>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { useState } from "react";
-import { Plus, MoreHorizontal } from "lucide-react";
 import { router } from "@inertiajs/react";
 import StudentProfile from "./StudentProfile";
+import { Plus, MoreHorizontal, Search } from "lucide-react";
 
 const TABS = [
   { id: "students", label: "Students" },
@@ -284,18 +29,22 @@ function Avatar({ src, name }) {
   }
 
   return (
-    <div className="w-9 h-9 rounded-full bg-[#d0c4a8] text-[#7a6a4a] flex items-center justify-center font-bold text-sm flex-shrink-0">
+    <div className="w-9 h-9 rounded-full bg-[#f0bd05e1] text-[#000000] flex items-center justify-center font-bold text-sm flex-shrink-0">
       {getInitials(name)}
     </div>
   );
 }
 
-export default function ClassDetails({ students = [] }) {
+export default function ClassDetails({ students = [], coach }) {
   const [activeTab, setActiveTab] = useState("students");
 const [selectedStudent, setSelectedStudent] = useState(null);
 
 
-
+const [search, setSearch] = useState("");
+const filteredStudents = students.filter((student) =>
+  student.name.toLowerCase().includes(search.toLowerCase()) ||
+  student.email.toLowerCase().includes(search.toLowerCase())
+);
 
 
 if (selectedStudent) {
@@ -306,6 +55,7 @@ if (selectedStudent) {
         />
     );
 }
+console.log(coach);
   return (
 <div className="bg-[#ffffff] rounded-2xl p-8 min-h-[400px]">
         {/* Tabs */}
@@ -327,15 +77,90 @@ if (selectedStudent) {
 
       {activeTab === "students" && (
         <>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-baseline gap-3">
-              <h2 className="text-lg font-bold text-black">Active Roster</h2>
-              <span className="text-sm text-[#aaa]">{students.length} Students</span>
-            </div>
-            <button className="flex items-center gap-1.5 text-[#C9A84C] text-sm font-semibold">
-              <Plus size={15} /> Add Student
-            </button>
-          </div>
+         <div className="flex items-center justify-between mb-6 ">
+
+<div className="mb-2 flex justify-center">
+
+    <div className="h-[80px] w-[1150px] rounded-3xl  border-[#ECE6D8] bg-gradient-to-r from-[#FFF8E5] via-[#FAF8F3] to-[#F4F4F2] px-6 py-4 shadow-[0_15px_45px_rgba(0,0,0,.05)]">
+
+      <div className="flex items-center justify-between h-full">
+
+    {/* LEFT */}
+    <div className="flex items-center gap-6">
+
+        {/* Active Roster */}
+        <div>
+            <p className="mt-1 text-xl font-bold tracking-tight text-neutral-900">
+                Classroom
+            </p>
+
+           
+
+            <p className="mt-1 text-xs text-neutral-500">
+                {filteredStudents.length} Students 
+            </p>
+        </div>
+
+        <div className="h-10 w-px bg-neutral-200" />
+
+        {/* Coach */}
+        <div>
+            <p className="text-[9px] uppercase tracking-[0.22em] text-neutral-400 font-semibold">
+                Coach
+            </p>
+
+            <p className="mt-1 text-base font-semibold text-neutral-900">
+                {coach}
+            </p>
+        </div>
+
+    </div>
+
+    {/* RIGHT */}
+    <div className="relative w-[700px]">
+
+        <Search
+            size={15}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400"
+        />
+
+        <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search students..."
+            className="
+                h-10
+                w-full
+                rounded-xl
+                border
+                border-[#E8E1D1]
+                bg-white
+                pl-10
+                pr-4
+                text-xs
+                placeholder:text-neutral-400
+                outline-none
+                transition
+                focus:border-[#F4B400]
+                focus:ring-2
+                focus:ring-[#F4B400]/15
+            "
+        />
+
+    </div>
+
+</div>
+
+    </div>
+
+</div>
+
+    {/* <button className="flex items-center gap-1.5 text-[#C9A84C] text-sm font-semibold">
+        <Plus size={15} />
+        Add Student
+    </button> */}
+
+</div>
 
           <table className="w-full border-collapse">
             <thead>
@@ -353,8 +178,8 @@ if (selectedStudent) {
               </tr>
             </thead>
             <tbody>
-              {students.map((s) => {
-                const online = s.status === "Online";
+{filteredStudents.map((s) => {
+                  const online = s.status === "Online";
                 return (
 <tr
     key={s.id}
@@ -378,7 +203,7 @@ if (selectedStudent) {
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           online
                             ? "bg-green-100 text-green-700"
-                            : "bg-neutral-100 text-neutral-500"
+                            : "bg-gradient-to-r from-[#FFF8E5] via-[#FAF8F3] to-[#F4F4F2]"
                         }`}
                       >
                         {s.status}
@@ -416,14 +241,15 @@ if (selectedStudent) {
                 );
               })}
 
-              {students.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="text-center py-12 text-sm text-[#aaa]">
-                    No students yet
-                  </td>
-                </tr>
-              )}
+{filteredStudents.length === 0 && (
+  <tr>
+    <td colSpan={5} className="text-center py-12 text-sm text-[#aaa]">
+      No students found
+    </td>
+  </tr>
+)}
             </tbody>
+
           </table>
         </>
       )}
