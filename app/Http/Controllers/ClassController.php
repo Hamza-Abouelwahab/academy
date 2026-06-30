@@ -132,6 +132,9 @@ class ClassController extends Controller
                 $data["students"][$key]["promo"] = $class->promo;
                 $data["students"][$key]["type"] = $class->type;
                 $data["students"][$key]["class"] = $class->class;
+                $data["students"][$key]["avatar"] = $student->avatar ?
+                    env("CENTRAL_HOST_URL") . "/storage/img/profile/" . $student->avatar :
+                    null;
                 $data["students"][$key]["email"] = $student->email;
                 $data["students"][$key]["gh_url"] = $this->getGithub($student);
                 $data["students"][$key]["wakaKey"] = $this->getWakatimeKey($student);
