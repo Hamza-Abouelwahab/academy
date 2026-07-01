@@ -7,6 +7,9 @@ use App\Models\Role;
 use App\Models\User_role;
 use App\Models\User;
 use App\Models\UserClass;
+use App\Services\GetAvatarsService;
+use App\Services\GetSocialsService;
+use App\Services\GetWakaTimeKeys;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -15,17 +18,16 @@ use function Illuminate\Log\log;
 
 class GetClassesDataController extends Controller
 {
+    public function __construct(
+        private GetSocialsService $getSocialsService,
+        private GetWakaTimeKeys $get_waka_time_keys,
+        private GetAvatarsService $get_avatars_service,
+    ) {}
+
     private function assignRoles(array $roles, ?User $user)
     {
         if ($user) {
             $user->roles()->detach();
-            $role_id = Role::where("role", "super_admin")->value('id');
-            if ($user->central_id  === 6 && $role_id) {
-                User_role::create([
-                    "user_id" => $user->id,
-                    "role_id" =>$role_id,
-                ]);
-            }
             foreach ($roles as $role) {
                 $role_id = Role::where("role", Str::lower($role))->value('id');
                 if ($role_id) {
@@ -85,7 +87,7 @@ class GetClassesDataController extends Controller
                     $formation = Classes::create(
                         [
                             "central_id" => $class["central_id"],
-                            "name" => $class["type"] ." ". $class["class"] ?? 1.  . " promo " . $class["promo"],
+                            "name" => $class["type"] . " " . $class["class"] ?? 1.  . " promo " . $class["promo"],
                             "promo" => $class["promo"],
                             "type" => $class["type"],
                             "class" => $class["class"] ?? 1,
@@ -132,10 +134,11 @@ class GetClassesDataController extends Controller
                             ]
                         );
                     }
+                    // $this->get_avatars_service->get($coach["avatar"]);
                     $this->assignRoles($coach["roles"], $user);
                     $this->assignClass($formation, $user, true);
                 }
-                
+
                 // create or update the students
                 foreach ($class["users"] ?? [] as $student) {
                     $user = User::where("central_id", $student["central_id"])->first();
@@ -165,10 +168,15 @@ class GetClassesDataController extends Controller
                             ]
                         );
                     }
+                    // $this->get_avatars_service->get($student["avatar"]);
                     $this->assignRoles($student["roles"], $user);
                     $this->assignClass($formation, $user);
                 }
             }
+            // get users socials
+            $this->getSocialsService->getSocials();
+            // get users wakatime Kyes
+            $this->get_waka_time_keys->getWakaTimeKeys();
         }
         return redirect()->back();
     }
