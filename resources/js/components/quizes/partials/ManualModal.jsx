@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import { CheckCircle2, Circle, Loader2, PenLine, Plus, Trash2 } from 'lucide-react';
 import { TransText } from '@/components/TransText';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { store as manualStore } from '@/routes/quizes/manual';
 
 const uid = () => Math.random().toString(36).slice(2);
 
@@ -27,7 +29,7 @@ const EMPTY_FORM = () => ({
     questions: [createQuestion()],
 });
 
-export default function ManualModal({ open, onOpenChange }) {
+export default function ManualModal({ open, onOpenChange, onCreated , topicId }) {
     const [form, setForm] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
@@ -148,11 +150,34 @@ export default function ManualModal({ open, onOpenChange }) {
             return;
         }
         setSubmitting(true);
-        // TODO: replace with real API call
-        setTimeout(() => {
-            setSubmitting(false);
-            handleOpenChange(false);
-        }, 2500);
+
+        router.post(
+            manualStore.url(),
+            {
+                topic_id: topicId,
+                title: form.title,
+                questions: form.questions.map((question) => ({
+                    text: question.text,
+                    answers: question.answers.map((answer) => ({
+                        text: answer.text,
+                    })),
+                    correct_index: question.answers.findIndex(
+                        (answer) => answer.id === question.correctId,
+                    ),
+                })),
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    onCreated?.();
+                    handleOpenChange(false);
+                },
+                onError: (backendErrors) => {
+                    setErrors((prev) => ({ ...prev, ...backendErrors }));
+                },
+                onFinish: () => setSubmitting(false),
+            },
+        );
     };
 
     return (

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { router } from '@inertiajs/react';
 import { Upload, FileText, X, Loader2 } from 'lucide-react';
 import { TransText } from '@/components/TransText';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { generate as fileGenerate } from '@/routes/quizes/file';
 
 const ACCEPTED_MIME = new Set([
     'application/pdf',
@@ -21,7 +23,7 @@ const ACCEPTED_MIME = new Set([
 
 const MAX_SIZE_MB = 20;
 
-export default function PdfModal({ open, onOpenChange }) {
+export default function PdfModal({ open, onOpenChange, onCreated }) {
     const [file, setFile] = useState(null);
     const [dragging, setDragging] = useState(false);
     const [error, setError] = useState('');
@@ -67,11 +69,23 @@ export default function PdfModal({ open, onOpenChange }) {
             return;
         }
         setProcessing(true);
-        // TODO: replace with real API call
-        setTimeout(() => {
-            setProcessing(false);
-            handleOpenChange(false);
-        }, 3000);
+
+        router.post(
+            fileGenerate.url(),
+            { file },
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    onCreated?.();
+                    handleOpenChange(false);
+                },
+                onError: (errors) => {
+                    setError(errors.file ?? 'File quiz generation is not implemented yet.');
+                },
+                onFinish: () => setProcessing(false),
+            },
+        );
     };
 
     const fileExt = file ? file.name.split('.').pop().toUpperCase() : '';

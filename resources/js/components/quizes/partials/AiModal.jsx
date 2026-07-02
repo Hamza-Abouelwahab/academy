@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { router } from '@inertiajs/react';
 import { Bot, Loader2, Send, Sparkles, User } from 'lucide-react';
 import { TransText } from '@/components/TransText';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { generate as aiGenerate } from '@/routes/quizes/ai';
 
 const INITIAL_MESSAGES = [
     {
@@ -17,9 +19,10 @@ const INITIAL_MESSAGES = [
     },
 ];
 
-export default function AiModal({ open, onOpenChange }) {
+export default function AiModal({ open, onOpenChange, onCreated }) {
     const [messages, setMessages] = useState(INITIAL_MESSAGES);
     const [input, setInput] = useState('');
+    const [error, setError] = useState('');
     const [chatLoading, setChatLoading] = useState(false);
     const [generating, setGenerating] = useState(false);
     const bottomRef = useRef(null);
@@ -28,6 +31,7 @@ export default function AiModal({ open, onOpenChange }) {
         if (open) {
             setMessages(INITIAL_MESSAGES);
             setInput('');
+            setError('');
             setChatLoading(false);
             setGenerating(false);
         }
@@ -43,6 +47,7 @@ export default function AiModal({ open, onOpenChange }) {
 
         setMessages((prev) => [...prev, { role: 'user', text }]);
         setInput('');
+        setError('');
         setChatLoading(true);
 
         // TODO: replace with real AI chat API call
@@ -66,12 +71,35 @@ export default function AiModal({ open, onOpenChange }) {
     };
 
     const handleGenerate = () => {
+        const topic = messages
+            .filter((message) => message.role === 'user')
+            .map((message) => message.text)
+            .join('\n')
+            .trim();
+
+        if (!topic) {
+            setError('Please describe a topic before generating the quiz.');
+            return;
+        }
+
         setGenerating(true);
-        // TODO: replace with real quiz generation API call
-        setTimeout(() => {
-            setGenerating(false);
-            onOpenChange(false);
-        }, 3000);
+        setError('');
+
+        router.post(
+            aiGenerate.url(),
+            { topic },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    onCreated?.();
+                    onOpenChange(false);
+                },
+                onError: (errors) => {
+                    setError(errors.topic ?? 'Unable to generate quiz with AI.');
+                },
+                onFinish: () => setGenerating(false),
+            },
+        );
     };
 
     const hasConversation = messages.length > 1;
@@ -189,6 +217,9 @@ export default function AiModal({ open, onOpenChange }) {
 
                 {/* ── Footer ── */}
                 <DialogFooter className="border-t border-beta/10 px-6 py-4 dark:border-beta">
+                    {error && (
+                        <p className="mr-auto text-xs text-error">{error}</p>
+                    )}
                     <Button
                         type="button"
                         variant="outline"

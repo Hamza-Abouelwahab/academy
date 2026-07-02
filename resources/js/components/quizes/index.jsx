@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import { ChevronDown, FileUp, PenLine, Plus, Sparkles } from 'lucide-react';
 import { TransText } from '@/components/TransText';
 import { Button } from '@/components/ui/button';
@@ -12,10 +13,11 @@ import AiModal from './partials/AiModal';
 import ManualModal from './partials/ManualModal';
 import PdfModal from './partials/PdfModal';
 
-export default function Quizes() {
+export default function Quizes({ topicId }) {
     const [pdfOpen, setPdfOpen] = useState(false);
     const [aiOpen, setAiOpen] = useState(false);
     const [manualOpen, setManualOpen] = useState(false);
+    const refreshQuizzes = () => router.reload({ only: ['quizzes'] });
 
     return (
         <>
@@ -70,9 +72,22 @@ export default function Quizes() {
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <PdfModal open={pdfOpen} onOpenChange={setPdfOpen} />
-            <AiModal open={aiOpen} onOpenChange={setAiOpen} />
-            <ManualModal open={manualOpen} onOpenChange={setManualOpen} />
+            <PdfModal
+                open={pdfOpen}
+                onOpenChange={setPdfOpen}
+                onCreated={refreshQuizzes}
+            />
+            <AiModal
+                open={aiOpen}
+                onOpenChange={setAiOpen}
+                onCreated={refreshQuizzes}
+            />
+            <ManualModal
+                open={manualOpen}
+                onOpenChange={setManualOpen}
+                onCreated={refreshQuizzes}
+                topicId={topicId}
+            />
         </>
     );
 }
