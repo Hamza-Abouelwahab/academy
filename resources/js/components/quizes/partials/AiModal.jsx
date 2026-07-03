@@ -19,7 +19,7 @@ const INITIAL_MESSAGES = [
     },
 ];
 
-export default function AiModal({ open, onOpenChange, onCreated }) {
+export default function AiModal({ open, onOpenChange, onCreated, topicId }) {
     const [messages, setMessages] = useState(INITIAL_MESSAGES);
     const [input, setInput] = useState('');
     const [error, setError] = useState('');
@@ -56,7 +56,7 @@ export default function AiModal({ open, onOpenChange, onCreated }) {
                 ...prev,
                 {
                     role: 'assistant',
-                    text: "Got it! I'll build a quiz around that. Feel free to add more details, or click \"Generate Quiz\" when you're ready.",
+                    text: 'Got it! I\'ll build a quiz around that. Feel free to add more details, or click "Generate Quiz" when you\'re ready.',
                 },
             ]);
             setChatLoading(false);
@@ -82,12 +82,19 @@ export default function AiModal({ open, onOpenChange, onCreated }) {
             return;
         }
 
+        if (!topicId) {
+            setError('Please select a topic before generating the quiz.');
+            return;
+        }
         setGenerating(true);
         setError('');
 
         router.post(
             aiGenerate.url(),
-            { topic },
+            {
+                topic_id: topicId,
+                topic,
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => {
@@ -95,7 +102,9 @@ export default function AiModal({ open, onOpenChange, onCreated }) {
                     onOpenChange(false);
                 },
                 onError: (errors) => {
-                    setError(errors.topic ?? 'Unable to generate quiz with AI.');
+                    setError(
+                        errors.topic_id ?? errors.topic ?? 'Unable to generate quiz with AI.',
+                    );
                 },
                 onFinish: () => setGenerating(false),
             },
@@ -194,12 +203,14 @@ export default function AiModal({ open, onOpenChange, onCreated }) {
                             onKeyDown={handleKeyDown}
                             disabled={chatLoading || generating}
                             placeholder="Describe the topic or content for the quiz…"
-                            className="custom-scrollbar flex-1 resize-none rounded-lg border border-beta/20 bg-transparent px-3 py-2 text-sm text-beta placeholder:text-beta/40 focus:border-alpha/50 focus:outline-none focus:ring-2 focus:ring-alpha/15 disabled:opacity-50 dark:border-beta dark:text-light dark:placeholder:text-light/30 dark:focus:border-alpha/60"
+                            className="custom-scrollbar flex-1 resize-none rounded-lg border border-beta/20 bg-transparent px-3 py-2 text-sm text-beta placeholder:text-beta/40 focus:border-alpha/50 focus:ring-2 focus:ring-alpha/15 focus:outline-none disabled:opacity-50 dark:border-beta dark:text-light dark:placeholder:text-light/30 dark:focus:border-alpha/60"
                         />
                         <Button
                             type="button"
                             size="icon"
-                            disabled={!input.trim() || chatLoading || generating}
+                            disabled={
+                                !input.trim() || chatLoading || generating
+                            }
                             onClick={sendMessage}
                             className="mb-0.5 shrink-0 bg-alpha text-beta hover:bg-alpha/85 disabled:opacity-50"
                         >
@@ -238,12 +249,20 @@ export default function AiModal({ open, onOpenChange, onCreated }) {
                         {generating ? (
                             <>
                                 <Loader2 className="size-4 animate-spin" />
-                                <TransText en="Processing…" fr="Traitement…" ar="جارٍ المعالجة…" />
+                                <TransText
+                                    en="Processing…"
+                                    fr="Traitement…"
+                                    ar="جارٍ المعالجة…"
+                                />
                             </>
                         ) : (
                             <>
                                 <Sparkles className="size-4" />
-                                <TransText en="Generate Quiz" fr="Générer le Quiz" ar="إنشاء الاختبار" />
+                                <TransText
+                                    en="Generate Quiz"
+                                    fr="Générer le Quiz"
+                                    ar="إنشاء الاختبار"
+                                />
                             </>
                         )}
                     </Button>

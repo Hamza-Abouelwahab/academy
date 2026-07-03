@@ -6,6 +6,7 @@ use App\Models\Quiz;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
 use App\Models\Topic;
+use App\Services\QuizAiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -15,26 +16,26 @@ class QuizController extends Controller
 {
     public function index()
     {
-         return Inertia::render('quizes/index', [
-        'topics' => Topic::query()
-            ->select('id', 'title')
-            ->orderBy('title')
-            ->get(),
+        return Inertia::render('quizes/index', [
+            'topics' => Topic::query()
+                ->select('id', 'title')
+                ->orderBy('title')
+                ->get(),
 
-        'quizzes' => Quiz::query()
-            ->withCount('questions')
-            ->latest()
-            ->get([
-                'id',
-                'topic_id',
-                'title',
-                'description',
-                'passing_score',
-                'xp_reward',
-                'order_index',
-                'created_at',
-            ]),
-    ]);
+            'quizzes' => Quiz::query()
+                ->withCount('questions')
+                ->latest()
+                ->get([
+                    'id',
+                    'topic_id',
+                    'title',
+                    'description',
+                    'passing_score',
+                    'xp_reward',
+                    'order_index',
+                    'created_at',
+                ]),
+        ]);
     }
 
     public function storeManual(Request $request)
@@ -89,15 +90,87 @@ class QuizController extends Controller
         return back();
     }
 
-    public function generateWithAi(Request $request)
+    public function generateWithAi(Request $request, QuizAiService $quizAiService)
     {
-        $request->validate([
-            'topic' => ['required', 'string', 'max:2000'],
+        $validated = $request->validate([
+            'topic_id' => ['required', 'exists:topics,id'],
+            'topic' => ['required', 'string', 'min:3', 'max:2000'],
         ]);
 
-        return back()->withErrors([
-            'topic' => 'AI quiz generation endpoint is not implemented yet.',
-        ]);
+        $topic = Topic::findOrFail($validated['topic_id']);
+
+        try {
+            $data = $quizAiService->generate($validated['topic']);
+        } catch (\Throwable $e) {
+            return back()->withErrors([
+                'topic' => $e->getMessage(),
+            ]);
+        }
+
+        DB::transaction(function () use ($data, $topic) {
+            $quiz = Quiz::create([
+                'topic_id' => $topic->id,
+                'title' => $data['title'] ?? 'AI Generated Quiz',
+                'description' => null,
+                'passing_score' => 70,
+                'xp_reward' => 0,
+                'order_index' => ((int) Quiz::where('topic_id', $topic->id)->max('order_index')) + 1,
+            ]);
+
+            foreach ($data['questions'] as $questionIndex => $questionData) {
+                $question = new QuizQuestion([
+                    'quiz_id' => $quiz->id,
+                    'question_text' => $questionData['question'],
+                    'order_index' => $questionIndex + 1,
+                ]);
+
+                if (Schema::hasColumn('quiz_questions', 'status')) {
+                    $question->forceFill([
+                        'status' => 'pending',
+                    ]);
+                }
+                if (Schema::hasColumn('quiz_questions', 'level')) {
+                    $question->forceFill([
+                        'level' => $questionData['level'] ?? 'easy',
+                    ]);
+                }
+                if (Schema::hasColumn('quiz_questions', 'type')) {
+                    $question->forceFill([
+                        'type' => $questionData['type'] ?? 'mcq',
+                    ]);
+                }
+
+                $question->save();
+
+                $correctAnswers = $questionData['correct_answer'] ?? [] ;
+                if (! is_array($correctAnswers)) {
+                    $correctAnswers = [$correctAnswers] ;
+                }
+                $options = $questionData['options'] ?? [] ;
+
+                if (($questionData['type'] ?? '') === 'true_false') {
+                    $options = ['True' , 'False'] ;
+                }
+                if (($questionData['type'] ?? '') === 'fill_blank' && empty($options)) {
+                    $options = $correctAnswers ;
+                }
+
+                foreach ($options as $optionIndex => $optionText) {
+                    $option = QuizOption::create([
+                        'question_id' => $question->id ,
+                        'option_text' => is_bool($optionText)
+                        ? ($optionText ? 'True' : 'False')
+                        : (string) $optionText ,
+                        'is_correct' => in_array($optionText , $correctAnswers, true)
+                        || in_array((string) $optionText , array_map('strval' , $correctAnswers) , true),
+                        'order_index' => $optionIndex + 1,
+                    ]);
+                }
+            }
+
+        });
+
+        return back()->with('success', 'AI quiz generated successfully.'); ;
     }
 
     public function generateFromFile(Request $request)

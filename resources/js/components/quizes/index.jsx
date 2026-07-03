@@ -14,6 +14,8 @@ import ManualModal from './partials/ManualModal';
 import PdfModal from './partials/PdfModal';
 
 export default function Quizes({ topicId }) {
+    // console.log(topicId);
+
     const [pdfOpen, setPdfOpen] = useState(false);
     const [aiOpen, setAiOpen] = useState(false);
     const [manualOpen, setManualOpen] = useState(false);
@@ -81,6 +83,7 @@ export default function Quizes({ topicId }) {
                 open={aiOpen}
                 onOpenChange={setAiOpen}
                 onCreated={refreshQuizzes}
+                topicId={topicId}
             />
             <ManualModal
                 open={manualOpen}

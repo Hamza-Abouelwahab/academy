@@ -30,6 +30,8 @@ const EMPTY_FORM = () => ({
 });
 
 export default function ManualModal({ open, onOpenChange, onCreated , topicId }) {
+    // console.log(topicId);
+
     const [form, setForm] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
