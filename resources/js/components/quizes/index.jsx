@@ -13,8 +13,11 @@ import AiModal from './partials/AiModal';
 import ManualModal from './partials/ManualModal';
 import PdfModal from './partials/PdfModal';
 
-export default function Quizes({ topicId }) {
-    // console.log(topicId);
+export default function Quizes({ topicId , conceptId }) {
+    console.log({
+    topicId,
+    conceptId,
+});
 
     const [pdfOpen, setPdfOpen] = useState(false);
     const [aiOpen, setAiOpen] = useState(false);
@@ -84,12 +87,14 @@ export default function Quizes({ topicId }) {
                 onOpenChange={setAiOpen}
                 onCreated={refreshQuizzes}
                 topicId={topicId}
+                conceptId={conceptId}
             />
             <ManualModal
                 open={manualOpen}
                 onOpenChange={setManualOpen}
                 onCreated={refreshQuizzes}
                 topicId={topicId}
+                conceptId={conceptId}
             />
         </>
     );

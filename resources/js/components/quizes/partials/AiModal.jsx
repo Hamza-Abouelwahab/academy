@@ -19,7 +19,7 @@ const INITIAL_MESSAGES = [
     },
 ];
 
-export default function AiModal({ open, onOpenChange, onCreated, topicId }) {
+export default function AiModal({ open, onOpenChange, onCreated, topicId, conceptId }) {
     const [messages, setMessages] = useState(INITIAL_MESSAGES);
     const [input, setInput] = useState('');
     const [error, setError] = useState('');
@@ -82,8 +82,8 @@ export default function AiModal({ open, onOpenChange, onCreated, topicId }) {
             return;
         }
 
-        if (!topicId) {
-            setError('Please select a topic before generating the quiz.');
+        if (!topicId && !conceptId) {
+            setError('Please select a lesson or concept before generating the quiz.');
             return;
         }
         setGenerating(true);
@@ -92,7 +92,8 @@ export default function AiModal({ open, onOpenChange, onCreated, topicId }) {
         router.post(
             aiGenerate.url(),
             {
-                topic_id: topicId,
+                topic_id: topicId || null ,
+                concept_id: conceptId || null ,
                 topic,
             },
             {
@@ -103,7 +104,7 @@ export default function AiModal({ open, onOpenChange, onCreated, topicId }) {
                 },
                 onError: (errors) => {
                     setError(
-                        errors.topic_id ?? errors.topic ?? 'Unable to generate quiz with AI.',
+                        errors.topic_id ?? errors.concept_id ?? errors.topic ?? 'Unable to generate quiz with AI.',
                     );
                 },
                 onFinish: () => setGenerating(false),

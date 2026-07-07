@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Quiz;
 use App\Models\QuizOption;
 use App\Models\QuizQuestion;
+use App\Models\Concept;
 use App\Models\Topic;
 use App\Services\QuizAiService;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class QuizController extends Controller
                 ->get([
                     'id',
                     'topic_id',
+                    'concept_id',
                     'title',
                     'description',
                     'passing_score',
@@ -47,20 +49,26 @@ class QuizController extends Controller
             'questions.*.answers' => ['required', 'array', 'min:2'],
             'questions.*.answers.*.text' => ['required', 'string'],
             'questions.*.correct_index' => ['required', 'integer', 'min:0'],
-            'topic_id' => ['required', 'exists:topics,id'],
+            'topic_id' => ['nullable', 'exists:topics,id', 'required_without:concept_id'],
+            'concept_id' => ['nullable' , 'exists:concepts,id', 'required_without:topic_id'],
         ]);
 
-        $topic = Topic::findOrFail($validated['topic_id']);
+        $topic = isset($validated['topic_id']) ? Topic::findOrFail($validated['topic_id']) : null;
+        $concept = isset($validated['concept_id']) ? Concept::findOrFail($validated['concept_id']) : null;
+        $orderIndex = $topic
+            ? ((int) Quiz::where('topic_id', $topic->id)->max('order_index')) + 1
+            : ((int) Quiz::where('concept_id', $concept->id)->max('order_index')) + 1;
 
 
-        DB::transaction(function () use ($validated, $topic) {
+        DB::transaction(function () use ($validated, $topic, $concept, $orderIndex) {
             $quiz = Quiz::create([
-                'topic_id' => $topic->id,
+                'topic_id' => $topic?->id,
+                'concept_id' => $concept?->id,
                 'title' => $validated['title'],
                 'description' => null,
                 'passing_score' => 70,
                 'xp_reward' => 0,
-                'order_index' => ((int) Quiz::where('topic_id', $topic->id)->max('order_index')) + 1,
+                'order_index' => $orderIndex,
             ]);
 
             foreach ($validated['questions'] as $questionIndex => $questionData) {
@@ -93,11 +101,16 @@ class QuizController extends Controller
     public function generateWithAi(Request $request, QuizAiService $quizAiService)
     {
         $validated = $request->validate([
-            'topic_id' => ['required', 'exists:topics,id'],
+            'topic_id' => ['nullable', 'exists:topics,id', 'required_without:concept_id'],
+            'concept_id' => ['nullable', 'exists:concepts,id', 'required_without:topic_id'],
             'topic' => ['required', 'string', 'min:3', 'max:2000'],
         ]);
 
-        $topic = Topic::findOrFail($validated['topic_id']);
+        $topic = isset($validated['topic_id']) ? Topic::findOrFail($validated['topic_id']) : null;
+        $concept = isset($validated['concept_id']) ? Concept::findOrFail($validated['concept_id']) : null;
+        $orderIndex = $topic
+            ? ((int) Quiz::where('topic_id', $topic->id)->max('order_index')) + 1
+            : ((int) Quiz::where('concept_id', $concept->id)->max('order_index')) + 1;
 
         try {
             $data = $quizAiService->generate($validated['topic']);
@@ -107,14 +120,15 @@ class QuizController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($data, $topic) {
+        DB::transaction(function () use ($data, $topic, $concept, $orderIndex) {
             $quiz = Quiz::create([
-                'topic_id' => $topic->id,
+                'topic_id' => $topic?->id,
+                'concept_id' => $concept?->id,
                 'title' => $data['title'] ?? 'AI Generated Quiz',
                 'description' => null,
                 'passing_score' => 70,
                 'xp_reward' => 0,
-                'order_index' => ((int) Quiz::where('topic_id', $topic->id)->max('order_index')) + 1,
+                'order_index' => $orderIndex,
             ]);
 
             foreach ($data['questions'] as $questionIndex => $questionData) {
@@ -156,7 +170,7 @@ class QuizController extends Controller
                 }
 
                 foreach ($options as $optionIndex => $optionText) {
-                    $option = QuizOption::create([
+                    QuizOption::create([
                         'question_id' => $question->id ,
                         'option_text' => is_bool($optionText)
                         ? ($optionText ? 'True' : 'False')
@@ -170,7 +184,7 @@ class QuizController extends Controller
 
         });
 
-        return back()->with('success', 'AI quiz generated successfully.'); ;
+        return back()->with('success', 'AI quiz generated successfully.');
     }
 
     public function generateFromFile(Request $request)
