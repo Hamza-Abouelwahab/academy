@@ -29,7 +29,7 @@ class ConceptBuilderController extends Controller
             'topics.exercises',
         ]);
 
-        return Inertia::render('Concepts/index', [
+        return Inertia::render('concepts/index', [
             'concept' => [
                 'id' => $concept->id,
                 'course_id' => $concept->course_id,
@@ -298,4 +298,5 @@ class ConceptBuilderController extends Controller
         ];
     }
 }
+
 
