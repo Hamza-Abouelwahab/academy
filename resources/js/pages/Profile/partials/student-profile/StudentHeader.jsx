@@ -9,7 +9,7 @@ import {
     Radar,
     Tooltip,
 } from "recharts";
-import { useAppContext } from "@/context/AppContext";
+import { useAppContext } from "@/context/appContext";
 import { ChevronLeft, } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useInitials } from "@/hooks/use-initials";
@@ -211,7 +211,6 @@ export default function StudentHeader({ student, s, skillData, onBack }) {
 
     );
 }
-
 
 
 
