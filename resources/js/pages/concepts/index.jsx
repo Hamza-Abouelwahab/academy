@@ -3,9 +3,9 @@ import { Head, router, usePage } from '@inertiajs/react';
 
 import AppLayout from '@/layouts/app-layout';
 import { index as coursesIndex } from '@/routes/courses';
-import ConceptTopbar from '../courses/partials/concept_builder/ConceptTopbar';
-import CourseStructureSidebar from '../courses/partials/concept_builder/CourseStructureSidebar';
-import TopicWorkspace from '../courses/partials/concept_builder/TopicWorkspace';
+import ConceptTopbar from './partials/ConceptTopbar';
+import CourseStructureSidebar from './partials/CourseStructureSidebar';
+import TopicWorkspace from './partials/TopicWorkspace';
 
 function hasResourceFile(resource) {
     return resource.file && typeof resource.file === 'object';
@@ -234,13 +234,13 @@ export default function Concept() {
 
     return (
         <ConceptBuilderLayout title={`${concept.title || 'Concept'} builder`}>
-            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-background text-foreground">
+            <div className="flex flex-col h-full min-h-0 overflow-hidden border rounded-lg border-border bg-background text-foreground">
                 <ConceptTopbar concept={concept} onSave={handleSave} />
 
                 {Object.keys(saveErrors).length > 0 && (
-                    <div className="border-b border-error/30 bg-error/10 px-6 py-2 text-xs text-error">
+                    <div className="px-6 py-2 text-xs border-b border-error/30 bg-error/10 text-error">
                         <p className="font-semibold">Save failed. Check these fields:</p>
-                        <ul className="mt-1 list-disc pl-4">
+                        <ul className="pl-4 mt-1 list-disc">
                             {Object.entries(saveErrors).map(([field, message]) => (
                                 <li key={field}>{field}: {message}</li>
                             ))}
