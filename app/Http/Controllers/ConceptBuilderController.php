@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Concept;
+use App\Models\Quiz;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -38,10 +39,26 @@ class ConceptBuilderController extends Controller
     public function edit(Concept $concept)
     {
         $concept->load('topics.lessons');
+        $topicIds = $concept->topics->pluck('id');
 
         return Inertia::render('Concepts/index', [
             'concept' => $concept,
             'topics' => $concept->topics,
+            'quizzes' => Quiz::query()
+                ->whereIn('topic_id', $topicIds)
+                ->withCount('questions')
+                ->latest()
+                ->get([
+                    'id',
+                    'topic_id',
+                    'concept_id',
+                    'title',
+                    'description',
+                    'passing_score',
+                    'xp_reward',
+                    'order_index',
+                    'created_at',
+                ]),
         ]);
     }
 }

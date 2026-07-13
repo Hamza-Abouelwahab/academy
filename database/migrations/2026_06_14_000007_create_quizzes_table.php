@@ -23,6 +23,17 @@
                     ->constrained()
                     ->nullOnDelete();
                 $table->string('title');
+                $table->enum('source', [
+                    'manual',
+                    'ai',
+                    'pdf',
+                ])->default('manual');
+
+                $table->enum('status', [
+                    'draft',
+                    'pending_review',
+                    'approved',
+                ])->default('draft');
                 $table->text('description')->nullable();
                 $table->unsignedTinyInteger('passing_score');
                 $table->unsignedInteger('xp_reward')->default(0);

@@ -9,6 +9,7 @@ export default function Concept() {
     const {
         concept: serverConcept,
         topics: serverTopics = [],
+        quizzes = [],
     } = usePage().props;
 
     const concept = serverConcept || {
@@ -30,12 +31,10 @@ export default function Concept() {
             status: 'draft',
             hasQuiz: false,
             hasExercise: false,
-        }))
+        })),
     );
 
-    const [activeTopicId, setActiveTopicId] = useState(
-        topics[0]?.id ?? null
-    );
+    const [activeTopicId, setActiveTopicId] = useState(topics[0]?.id ?? null);
 
     const activeTopic =
         topics.find((topic) => topic.id === activeTopicId) || null;
@@ -66,10 +65,8 @@ export default function Concept() {
     const updateTopic = (topicId, updates) => {
         setTopics((prev) =>
             prev.map((topic) =>
-                topic.id === topicId
-                    ? { ...topic, ...updates }
-                    : topic
-            )
+                topic.id === topicId ? { ...topic, ...updates } : topic,
+            ),
         );
     };
 
@@ -88,6 +85,7 @@ export default function Concept() {
 
                 <TopicWorkspace
                     topic={activeTopic}
+                    quizzes={quizzes}
                     onUpdateTopic={(updates) => {
                         if (!activeTopic) return;
                         updateTopic(activeTopic.id, updates);

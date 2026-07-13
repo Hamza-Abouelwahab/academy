@@ -18,10 +18,10 @@ export default function ConceptTopbar({ concept }) {
                 <div className="hidden lg:flex items-center gap-2 mr-2">
                         <Quizes conceptId={concept?.id} />
                         <Exercises coachType="coding" conceptId={concept?.id} />
-                    
+
                 </div>
 
-                
+
 
                 <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-alpha text-xs font-semibold">
                     <Save className="w-4 h-4" />

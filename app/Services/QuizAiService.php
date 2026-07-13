@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Prompts\GenerateQuizFromPdfPrompt;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 
 class QuizAiService
 {
@@ -94,5 +96,133 @@ PROMPT;
         }
 
         return $data;
+    }
+
+    public function generateFromPdf(string $pdfContent): array
+    {
+        $response = Http::withoutVerifying()
+            ->withHeaders([
+                'Authorization' => 'Bearer '.env('AI_API_KEY'),
+                'Content-Type' => 'application/json',
+            ])
+            ->post('https://api.groq.com/openai/v1/chat/completions', [
+                'model' => 'llama-3.3-70b-versatile',
+                'messages' => [[
+                    'role' => 'user',
+                    'content' => GenerateQuizFromPdfPrompt::build($pdfContent),
+                ]],
+                'temperature' => 0.7,
+            ]);
+
+        $json = $response->json();
+
+        if (isset($json['error'])) {
+            throw new \Exception($json['error']['message'] ?? 'AI generation failed.');
+        }
+
+        if (! isset($json['choices'][0]['message']['content'])) {
+            throw new \Exception('Invalid AI response.');
+        }
+
+        $content = str_replace(['```json', '```'], '', $json['choices'][0]['message']['content']);
+        $data = json_decode(trim($content), true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || ! is_array($data)) {
+            throw new \Exception('AI returned invalid JSON.');
+        }
+
+        $validator = Validator::make($data, [
+            'title' => ['required', 'string', 'max:255'],
+            'questions' => ['required', 'array', 'size:21'],
+            'questions.*' => ['required', 'array'],
+            'questions.*.level' => ['required', 'in:easy,intermediate,hard'],
+            'questions.*.type' => ['required', 'in:mcq,true_false,fill_blank,multiple_select'],
+            'questions.*.question' => ['required', 'string'],
+            'questions.*.options' => ['sometimes', 'array'],
+            'questions.*.options.*' => ['required', 'string'],
+            'questions.*.correct_answer' => ['required', 'array', 'min:1'],
+        ]);
+
+        $validator->after(function ($validator) use ($data) {
+            if (! isset($data['questions']) || ! is_array($data['questions'])) {
+                return;
+            }
+
+            $levelCounts = [];
+            foreach ($data['questions'] as $question) {
+                if (is_array($question) && isset($question['level']) && is_string($question['level'])) {
+                    $levelCounts[$question['level']] = ($levelCounts[$question['level']] ?? 0) + 1;
+                }
+            }
+
+            foreach (['easy', 'intermediate', 'hard'] as $level) {
+                if (($levelCounts[$level] ?? 0) !== 7) {
+                    $validator->errors()->add('questions', "The quiz must contain exactly 7 {$level} questions.");
+                }
+            }
+
+            $questionTypes = array_column(
+                array_filter($data['questions'], 'is_array'),
+                'type',
+            );
+            foreach (['mcq', 'true_false', 'fill_blank', 'multiple_select'] as $type) {
+                if (! in_array($type, $questionTypes, true)) {
+                    $validator->errors()->add('questions', "The quiz must include at least one {$type} question.");
+                }
+            }
+
+            foreach ($data['questions'] ?? [] as $index => $question) {
+                if (! is_array($question)) {
+                    continue;
+                }
+
+                $type = $question['type'] ?? null;
+                $options = $question['options'] ?? [];
+                $correctAnswers = $question['correct_answer'] ?? [];
+
+                if (! is_array($options) || ! is_array($correctAnswers)) {
+                    continue;
+                }
+
+                if (in_array($type, ['mcq', 'fill_blank', 'multiple_select'], true)) {
+                    foreach ($correctAnswers as $correctAnswer) {
+                        if (! is_string($correctAnswer)) {
+                            $validator->errors()->add("questions.{$index}.correct_answer", 'Correct answers for this question type must be strings.');
+                        }
+                    }
+                }
+
+                if (in_array($type, ['mcq', 'multiple_select'], true) && count($options) !== 4) {
+                    $validator->errors()->add("questions.{$index}.options", 'This question type must contain exactly 4 options.');
+                }
+
+                if ($type === 'mcq' && count($correctAnswers) !== 1) {
+                    $validator->errors()->add("questions.{$index}.correct_answer", 'An MCQ must contain exactly one correct answer.');
+                }
+
+                if ($type === 'multiple_select' && count($correctAnswers) < 2) {
+                    $validator->errors()->add("questions.{$index}.correct_answer", 'A multiple-select question must contain at least two correct answers.');
+                }
+
+                if (in_array($type, ['mcq', 'multiple_select'], true)) {
+                    foreach ($correctAnswers as $correctAnswer) {
+                        if (! in_array($correctAnswer, $options, true)) {
+                            $validator->errors()->add("questions.{$index}.correct_answer", 'Every correct answer must match one of the provided options.');
+                        }
+                    }
+                }
+
+                if ($type === 'true_false'
+                    && (count($correctAnswers) !== 1 || ! is_bool($correctAnswers[0] ?? null))) {
+                    $validator->errors()->add("questions.{$index}.correct_answer", 'A true/false answer must contain one boolean value.');
+                }
+            }
+        });
+
+        if ($validator->fails()) {
+            throw new \Exception('AI returned an invalid quiz: '.$validator->errors()->first());
+        }
+
+        return $validator->validated();
     }
 }

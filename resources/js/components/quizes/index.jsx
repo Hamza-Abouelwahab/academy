@@ -45,7 +45,7 @@ export default function Quizes({ topicId , conceptId }) {
                     >
                         <FileUp className="size-4 text-alpha" />
                         <TransText
-                            en="Generate by PDF"
+                            en="Generate from PDF"
                             fr="Générer par PDF"
                             ar="إنشاء من PDF"
                         />
@@ -81,6 +81,8 @@ export default function Quizes({ topicId , conceptId }) {
                 open={pdfOpen}
                 onOpenChange={setPdfOpen}
                 onCreated={refreshQuizzes}
+                topicId={topicId}
+                conceptId={conceptId}
             />
             <AiModal
                 open={aiOpen}

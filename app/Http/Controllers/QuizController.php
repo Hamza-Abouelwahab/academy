@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
+use Smalot\PdfParser\Parser;
 
 class QuizController extends Controller
 {
@@ -36,6 +37,8 @@ class QuizController extends Controller
                     'xp_reward',
                     'order_index',
                     'created_at',
+                    'source' ,
+                    'status' ,
                 ]),
         ]);
     }
@@ -50,7 +53,7 @@ class QuizController extends Controller
             'questions.*.answers.*.text' => ['required', 'string'],
             'questions.*.correct_index' => ['required', 'integer', 'min:0'],
             'topic_id' => ['nullable', 'exists:topics,id', 'required_without:concept_id'],
-            'concept_id' => ['nullable' , 'exists:concepts,id', 'required_without:topic_id'],
+            'concept_id' => ['nullable', 'exists:concepts,id', 'required_without:topic_id'],
         ]);
 
         $topic = isset($validated['topic_id']) ? Topic::findOrFail($validated['topic_id']) : null;
@@ -69,6 +72,8 @@ class QuizController extends Controller
                 'passing_score' => 70,
                 'xp_reward' => 0,
                 'order_index' => $orderIndex,
+                'source' => 'manual',
+                'status' => 'approved',
             ]);
 
             foreach ($validated['questions'] as $questionIndex => $questionData) {
@@ -129,6 +134,8 @@ class QuizController extends Controller
                 'passing_score' => 70,
                 'xp_reward' => 0,
                 'order_index' => $orderIndex,
+                'source' => 'ai',
+                'status' => 'pending_review',
             ]);
 
             foreach ($data['questions'] as $questionIndex => $questionData) {
@@ -156,45 +163,129 @@ class QuizController extends Controller
 
                 $question->save();
 
-                $correctAnswers = $questionData['correct_answer'] ?? [] ;
+                $correctAnswers = $questionData['correct_answer'] ?? [];
                 if (! is_array($correctAnswers)) {
-                    $correctAnswers = [$correctAnswers] ;
+                    $correctAnswers = [$correctAnswers];
                 }
-                $options = $questionData['options'] ?? [] ;
+                $options = $questionData['options'] ?? [];
 
                 if (($questionData['type'] ?? '') === 'true_false') {
-                    $options = ['True' , 'False'] ;
+                    $options = ['True', 'False'];
                 }
                 if (($questionData['type'] ?? '') === 'fill_blank' && empty($options)) {
-                    $options = $correctAnswers ;
+                    $options = $correctAnswers;
                 }
 
                 foreach ($options as $optionIndex => $optionText) {
                     QuizOption::create([
-                        'question_id' => $question->id ,
+                        'question_id' => $question->id,
                         'option_text' => is_bool($optionText)
-                        ? ($optionText ? 'True' : 'False')
-                        : (string) $optionText ,
-                        'is_correct' => in_array($optionText , $correctAnswers, true)
-                        || in_array((string) $optionText , array_map('strval' , $correctAnswers) , true),
+                            ? ($optionText ? 'True' : 'False')
+                            : (string) $optionText,
+                        'is_correct' => in_array($optionText, $correctAnswers, true)
+                            || in_array((string) $optionText, array_map('strval', $correctAnswers), true),
                         'order_index' => $optionIndex + 1,
                     ]);
                 }
             }
-
         });
 
         return back()->with('success', 'AI quiz generated successfully.');
     }
 
-    public function generateFromFile(Request $request)
+    public function generateFromFile(Request $request, QuizAiService $quizAiService)
     {
-        $request->validate([
-            'file' => ['required', 'file', 'max:20480'],
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'mimes:pdf', 'max:10240'],
+            'topic_id' => ['nullable', 'exists:topics,id', 'required_without:concept_id'],
+            'concept_id' => ['nullable', 'exists:concepts,id', 'required_without:topic_id'],
         ]);
 
-        return back()->withErrors([
-            'file' => 'File quiz generation is not implemented yet.',
-        ]);
+        $topic = isset($validated['topic_id']) ? Topic::findOrFail($validated['topic_id']) : null;
+        $concept = isset($validated['concept_id']) ? Concept::findOrFail($validated['concept_id']) : null;
+        $orderIndex = $topic
+            ? ((int) Quiz::where('topic_id', $topic->id)->max('order_index')) + 1
+            : ((int) Quiz::where('concept_id', $concept->id)->max('order_index')) + 1;
+
+        try {
+            $pdfContent = (new Parser)
+                ->parseFile($validated['file']->getPathname())
+                ->getText();
+            $pdfContent = trim(preg_replace('/[\x{0000}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{007F}]/u', '', $pdfContent) ?? '');
+
+            if ($pdfContent === '' || preg_match('/[\pL\pN]/u', $pdfContent) !== 1) {
+                return back()->withErrors([
+                    'file' => 'No readable text was found in this PDF. Scanned or image-only PDFs are not supported yet.',
+                ]);
+            }
+
+            $data = $quizAiService->generateFromPdf(mb_substr($pdfContent, 0, 50000));
+        } catch (\Throwable $e) {
+            return back()->withErrors([
+                'file' => $e->getMessage(),
+            ]);
+        }
+
+        DB::transaction(function () use ($data, $topic, $concept, $orderIndex) {
+            $quiz = Quiz::create([
+                'topic_id' => $topic?->id,
+                'concept_id' => $concept?->id,
+                'title' => $data['title'],
+                'description' => null,
+                'passing_score' => 70,
+                'xp_reward' => 0,
+                'order_index' => $orderIndex,
+                'source' => 'pdf',
+                'status' => 'pending_review',
+            ]);
+
+            foreach ($data['questions'] as $questionIndex => $questionData) {
+                $question = new QuizQuestion([
+                    'quiz_id' => $quiz->id,
+                    'question_text' => $questionData['question'],
+                    'order_index' => $questionIndex + 1,
+                ]);
+
+                if (Schema::hasColumn('quiz_questions', 'status')) {
+                    $question->forceFill(['status' => 'pending']);
+                }
+                if (Schema::hasColumn('quiz_questions', 'level')) {
+                    $question->forceFill(['level' => $questionData['level']]);
+                }
+                if (Schema::hasColumn('quiz_questions', 'type')) {
+                    $question->forceFill(['type' => $questionData['type']]);
+                }
+
+                $question->save();
+
+                $correctAnswers = $questionData['correct_answer'];
+                $options = $questionData['options'] ?? [];
+
+                if ($questionData['type'] === 'true_false') {
+                    $options = ['True', 'False'];
+                }
+                if ($questionData['type'] === 'fill_blank' && empty($options)) {
+                    $options = $correctAnswers;
+                }
+
+                foreach ($options as $optionIndex => $optionText) {
+                    $isCorrect = $questionData['type'] === 'true_false'
+                        ? ($optionText === 'True') === $correctAnswers[0]
+                        : in_array($optionText, $correctAnswers, true)
+                            || in_array((string) $optionText, array_map('strval', $correctAnswers), true);
+
+                    QuizOption::create([
+                        'question_id' => $question->id,
+                        'option_text' => is_bool($optionText)
+                            ? ($optionText ? 'True' : 'False')
+                            : (string) $optionText,
+                        'is_correct' => $isCorrect,
+                        'order_index' => $optionIndex + 1,
+                    ]);
+                }
+            }
+        });
+
+        return back()->with('success', 'PDF quiz generated successfully.');
     }
 }
