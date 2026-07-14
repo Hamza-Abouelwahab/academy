@@ -4,11 +4,12 @@ import Quizes from '@/components/quizes';
 import AppLayout from '@/layouts/app-layout';
 import { index as quizesIndex } from '@/routes/quizes';
 
-export default function QuizesIndex() {
+export default function QuizesIndex({ quizzes }) {
     const { topics } = usePage().props;
     const [selectedTopicId, setSelectedTopicId] = useState(
         topics?.[0]?.id ?? '',
     );
+    console.log(quizzes);
 
     return (
         <AppLayout

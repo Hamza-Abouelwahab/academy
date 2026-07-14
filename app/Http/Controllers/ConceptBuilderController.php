@@ -25,7 +25,9 @@ class ConceptBuilderController extends Controller
             'topics' => fn ($query) => $query->orderBy('order_index'),
             'topics.lessons' => fn ($query) => $query->orderBy('order_index'),
             'topics.resources',
-            'topics.quizzes',
+            'topics.quizzes' => fn ($query) => $query
+                ->withCount('questions')
+                ->latest(),
             'topics.exercises',
         ]);
 
@@ -37,6 +39,19 @@ class ConceptBuilderController extends Controller
                 'description' => $concept->description,
             ],
             'topics' => $concept->topics->map(fn (Topic $topic) => $this->transformTopic($topic))->values(),
+            'quizzes' => $concept->topics
+                ->flatMap(fn (Topic $topic) => $topic->quizzes)
+                ->map(fn ($quiz) => [
+                    'id' => $quiz->id,
+                    'topic_id' => $quiz->topic_id,
+                    'title' => $quiz->title,
+                    'passing_score' => $quiz->passing_score,
+                    'source' => $quiz->source,
+                    'status' => $quiz->status,
+                    'questions_count' => $quiz->questions_count,
+                    'created_at' => $quiz->created_at,
+                ])
+                ->values(),
         ]);
     }
 
@@ -298,5 +313,4 @@ class ConceptBuilderController extends Controller
         ];
     }
 }
-
 
