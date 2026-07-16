@@ -144,6 +144,51 @@ class ClassController extends Controller
         return Inertia::render("classes/[id]", ["data" => $data]);
     }
 
+    public function classroomSession($id)
+    {
+        $class = Classes::where("id", $id)->get()->first();
+        if (!$class) {
+            return abort(404);
+        }
+
+        $students = $this->getStudents($class);
+        $coach = $this->getLastCoach($class);
+        $data = [];
+        $data["id"] = $class->id;
+        $data["class"] = $class->class;
+        $data["promo"] = $class->promo;
+        $data["type"] = $class->type;
+        if ($coach) {
+            $data["coach"] = $coach->name;
+        }
+        if ($students) {
+            foreach ($students as $key => $student) {
+                $data["students"][$key]["id"] = $student->id;
+                $data["students"][$key]["name"] = $student->name;
+                $data["students"][$key]["avatar"] = $student->avatar;
+                $data["students"][$key]["field"] = $student->field;
+                $data["students"][$key]["status"] = $student->status;
+                $data["students"][$key]["promo"] = $class->promo;
+                $data["students"][$key]["type"] = $class->type;
+                $data["students"][$key]["class"] = $class->class;
+                $data["students"][$key]["avatar"] = $student->avatar ?
+                    env("CENTRAL_HOST_URL") . "/storage/img/profile/" . $student->avatar :
+                    null;
+                $data["students"][$key]["email"] = $student->email;
+                $data["students"][$key]["gh_url"] = $this->getGithub($student);
+                $data["students"][$key]["wakaKey"] = $this->getWakatimeKey($student);
+            }
+        }
+
+        return Inertia::render('classroom/sessions/[id]', [
+            'data' => $data,
+            'classroom' => [
+                'status' => 'pending',
+                'message' => 'Backend connection pending',
+            ],
+        ]);
+    }
+
     /**
      * Show the form for editing the specified resource.
      */
