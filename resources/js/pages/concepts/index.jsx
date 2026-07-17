@@ -262,6 +262,7 @@ export default function Concept() {
                     />
 
                     <TopicWorkspace
+                        concept={concept}
                         topic={activeTopic}
                         quizzes={quizzes}
                         publishableClasses={publishableClasses}

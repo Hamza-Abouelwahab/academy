@@ -1,7 +1,12 @@
 import VideoSection from './VideoSection';
 import LessonTabs from './LessonTabs';
 
-export default function TopicWorkspace({ topic, quizzes = [], onUpdateTopic }) {
+export default function TopicWorkspace({
+    concept,
+    topic,
+    quizzes = [],
+    onUpdateTopic,
+}) {
     if (!topic) {
         return (
             <main className="flex flex-1 items-center justify-center bg-background">
@@ -24,6 +29,7 @@ export default function TopicWorkspace({ topic, quizzes = [], onUpdateTopic }) {
                     <VideoSection topic={topic} onUpdateTopic={onUpdateTopic} />
 
                     <LessonTabs
+                        concept={concept}
                         topic={topic}
                         quizzes={quizzes}
                         onUpdateTopic={onUpdateTopic}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import {
     CheckCircle2,
@@ -19,6 +19,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { store as manualStore } from '@/routes/quizes/manual';
+import { update as updateQuiz } from '@/routes/quizes';
 
 const uid = () => Math.random().toString(36).slice(2);
 
@@ -29,6 +30,7 @@ const createQuestion = () => ({
     text: '',
     answers: [createAnswer(), createAnswer()],
     correctId: null,
+    correctIds: [],
 });
 
 const EMPTY_FORM = () => ({
@@ -42,12 +44,34 @@ export default function ManualModal({
     onCreated,
     topicId,
     conceptId,
+    quiz = null,
 }) {
     // console.log(topicId);
 
     const [form, setForm] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
+    const isEditing = Boolean(quiz);
+
+    useEffect(() => {
+        if (!open || !quiz) return;
+
+        setForm({
+            title: quiz.title || '',
+            questions: quiz.questions.map((question) => ({
+                id: question.id,
+                text: question.text,
+                answers: question.answers.map((answer) => ({
+                    id: answer.id,
+                    text: answer.text,
+                })),
+                correctIds: question.answers
+                    .filter((answer) => answer.is_correct)
+                    .map((answer) => answer.id),
+            })),
+        });
+        setErrors({});
+    }, [open, quiz]);
 
     const clearError = (key) =>
         setErrors((prev) => {
@@ -135,6 +159,9 @@ export default function ManualModal({
                     ...q,
                     answers,
                     correctId: q.correctId === aId ? null : q.correctId,
+                    correctIds: (q.correctIds || []).filter(
+                        (correctId) => correctId !== aId,
+                    ),
                 };
             }),
         }));
@@ -143,7 +170,13 @@ export default function ManualModal({
         setForm((prev) => ({
             ...prev,
             questions: prev.questions.map((q) =>
-                q.id === qId ? { ...q, correctId: aId } : q,
+                q.id === qId
+                    ? {
+                          ...q,
+                          correctId: aId,
+                          correctIds: [aId],
+                      }
+                    : q,
             ),
         }));
         clearError(`correct_${qId}`);
@@ -157,7 +190,7 @@ export default function ManualModal({
         form.questions.forEach((q) => {
             if (!q.text.trim())
                 errs[`q_${q.id}`] = 'Question text is required.';
-            if (!q.correctId)
+            if (!(q.correctIds || (q.correctId ? [q.correctId] : [])).length)
                 errs[`correct_${q.id}`] = 'Mark the correct answer.';
             q.answers.forEach((a) => {
                 if (!a.text.trim()) errs[`a_${q.id}_${a.id}`] = 'Required.';
@@ -173,7 +206,7 @@ export default function ManualModal({
             setErrors(errs);
             return;
         }
-        if (!topicId && !conceptId) {
+        if (!isEditing && !topicId && !conceptId) {
             setErrors((prev) => ({
                 ...prev,
                 topic_id:
@@ -183,34 +216,54 @@ export default function ManualModal({
         }
         setSubmitting(true);
 
-        router.post(
-            manualStore.url(),
-            {
-                topic_id: topicId,
-                concept_id: conceptId,
-                title: form.title,
-                questions: form.questions.map((question) => ({
-                    text: question.text,
-                    answers: question.answers.map((answer) => ({
-                        text: answer.text,
-                    })),
-                    correct_index: question.answers.findIndex(
-                        (answer) => answer.id === question.correctId,
-                    ),
+        const url = isEditing ? updateQuiz.url(quiz.id) : manualStore.url();
+        const payload = {
+            topic_id: topicId,
+            concept_id: conceptId,
+            title: form.title,
+            questions: form.questions.map((question) => ({
+                text: question.text,
+                id:
+                    isEditing && Number.isInteger(question.id)
+                        ? question.id
+                        : null,
+                answers: question.answers.map((answer) => ({
+                    text: answer.text,
+                    id:
+                        isEditing && Number.isInteger(answer.id)
+                            ? answer.id
+                            : null,
                 })),
+                correct_index: question.answers.findIndex(
+                    (answer) => answer.id === question.correctId,
+                ),
+                correct_indices: question.answers
+                    .map((answer, index) =>
+                        (question.correctIds || []).includes(answer.id)
+                            ? index
+                            : null,
+                    )
+                    .filter((index) => index !== null),
+            })),
+        };
+        const options = {
+            preserveScroll: true,
+            onSuccess: () => {
+                onCreated?.();
+                handleOpenChange(false);
             },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    onCreated?.();
-                    handleOpenChange(false);
-                },
-                onError: (backendErrors) => {
-                    setErrors((prev) => ({ ...prev, ...backendErrors }));
-                },
-                onFinish: () => setSubmitting(false),
+            onError: (backendErrors) => {
+                setErrors((prev) => ({ ...prev, ...backendErrors }));
             },
-        );
+            onFinish: () => setSubmitting(false),
+        };
+
+        if (isEditing) {
+            router.put(url, payload, options);
+            return;
+        }
+
+        router.post(url, payload, options);
     };
 
     return (
@@ -225,7 +278,11 @@ export default function ManualModal({
                         <div>
                             <DialogTitle>
                                 <TransText
-                                    en="Create Quiz Manually"
+                                    en={
+                                        isEditing
+                                            ? 'Review / Edit Quiz'
+                                            : 'Create Quiz Manually'
+                                    }
                                     fr="Créer un Quiz Manuellement"
                                     ar="إنشاء اختبار يدويًا"
                                 />
@@ -354,7 +411,11 @@ export default function ManualModal({
                                     <>
                                         <Plus className="size-4" />
                                         <TransText
-                                            en="Create Quiz"
+                                            en={
+                                                isEditing
+                                                    ? 'Save Quiz'
+                                                    : 'Create Quiz'
+                                            }
                                             fr="Créer le Quiz"
                                             ar="إنشاء الاختبار"
                                         />
@@ -429,7 +490,10 @@ function QuestionCard({
             {/* Answers */}
             <div className="space-y-2 pl-2">
                 {question.answers.map((answer, aIdx) => {
-                    const isCorrect = question.correctId === answer.id;
+                    const isCorrect = (
+                        question.correctIds ||
+                        (question.correctId ? [question.correctId] : [])
+                    ).includes(answer.id);
                     return (
                         <div
                             key={answer.id}

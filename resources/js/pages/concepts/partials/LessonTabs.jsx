@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { router } from '@inertiajs/react';
 import {
     Award,
     BookOpen,
@@ -18,6 +19,10 @@ import Quizes from '@/components/quizes';
 import Exercises from '@/components/exercices';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import DeleteModal from '@/components/DeleteModal';
+import ManualModal from '@/components/quizes/partials/ManualModal';
+import ReviewModal from '@/components/quizes/partials/ReviewModal';
+import { destroy as destroyQuiz } from '@/routes/quizes';
 
 const statusStyles = {
     pending_review: 'border-alpha/40 bg-alpha/10 text-alpha',
@@ -65,6 +70,15 @@ const formatRelativeDate = (value) => {
 
 const normalizeStatus = (status) => String(status || '').toLowerCase();
 const normalizeSource = (source) => String(source || '').toLowerCase();
+const getQuizStatusLabel = (source, status) => {
+    if (source === 'manual' && status === 'approved') return 'Published';
+    if (['ai', 'pdf'].includes(source) && status === 'approved') {
+        return 'Reviewed';
+    }
+    if (status === 'pending_review') return 'Pending Review';
+
+    return null;
+};
 
 function QuizBadge({ children, className }) {
     return (
@@ -77,7 +91,7 @@ function QuizBadge({ children, className }) {
     );
 }
 
-function QuizActionButton({ label, icon: Icon }) {
+function QuizActionButton({ label, icon: Icon, onClick, disabled = false }) {
     return (
         <Button
             type="button"
@@ -85,6 +99,8 @@ function QuizActionButton({ label, icon: Icon }) {
             size="icon"
             title={label}
             aria-label={label}
+            onClick={onClick}
+            disabled={disabled}
             className="size-9 rounded-lg border border-border bg-background/70 text-muted-foreground shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-alpha/50 hover:bg-alpha/10 hover:text-alpha hover:shadow-md"
         >
             <Icon className="size-4" />
@@ -92,11 +108,12 @@ function QuizActionButton({ label, icon: Icon }) {
     );
 }
 
-function QuizCard({ quiz }) {
+function QuizCard({ quiz, onPreview, onEdit, onDelete, deleting }) {
     const status = normalizeStatus(quiz.status);
     const source = normalizeSource(quiz.source);
     const questionCount = quiz.questions_count ?? quiz.questionsCount ?? 0;
     const createdAt = formatRelativeDate(quiz.created_at);
+    const statusLabel = getQuizStatusLabel(source, status);
     const sourceLabels = {
         ai: 'AI Generated',
         manual: 'Manual',
@@ -120,15 +137,9 @@ function QuizCard({ quiz }) {
                         </QuizBadge>
                     )}
 
-                    {status && statusStyles[status] && (
+                    {statusLabel && statusStyles[status] && (
                         <QuizBadge className={statusStyles[status]}>
-                            {
-                                {
-                                    pending_review: 'Pending Review',
-                                    approved: 'Approved',
-                                    rejected: 'Rejected',
-                                }[status]
-                            }
+                            {statusLabel}
                         </QuizBadge>
                     )}
                 </div>
@@ -147,9 +158,22 @@ function QuizCard({ quiz }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-2 sm:justify-end">
-                <QuizActionButton label="Preview" icon={Eye} />
-                <QuizActionButton label="Review / Edit" icon={Pencil} />
-                <QuizActionButton label="Delete" icon={Trash2} />
+                <QuizActionButton
+                    label="Preview"
+                    icon={Eye}
+                    onClick={() => onPreview(quiz)}
+                />
+                <QuizActionButton
+                    label="Review / Edit"
+                    icon={Pencil}
+                    onClick={() => onEdit(quiz)}
+                />
+                <QuizActionButton
+                    label="Delete"
+                    icon={Trash2}
+                    onClick={() => onDelete(quiz)}
+                    disabled={deleting}
+                />
             </div>
         </article>
     );
@@ -171,14 +195,80 @@ function QuizEmptyState() {
     );
 }
 
-export default function LessonTabs({ topic, quizzes = [], onUpdateTopic }) {
+export default function LessonTabs({
+    concept,
+    topic,
+    quizzes = [],
+    onUpdateTopic,
+}) {
     const [activeTab, setActiveTab] = useState('theory');
-    const lessonQuizzes = quizzes.filter(
+    const [displayedQuizzes, setDisplayedQuizzes] = useState(quizzes);
+    const [previewingQuiz, setPreviewingQuiz] = useState(null);
+    const [editingQuiz, setEditingQuiz] = useState(null);
+    const [quizToDelete, setQuizToDelete] = useState(null);
+    const [deleteProcessing, setDeleteProcessing] = useState(false);
+    const [deleteError, setDeleteError] = useState('');
+
+    useEffect(() => setDisplayedQuizzes(quizzes), [quizzes]);
+
+    const lessonQuizzes = displayedQuizzes.filter(
         (quiz) =>
             quiz.topic_id !== null &&
             quiz.topic_id !== undefined &&
             Number(quiz.topic_id) === Number(topic?.id),
     );
+    const conceptQuizzes = displayedQuizzes.filter(
+        (quiz) =>
+            (quiz.topic_id === null || quiz.topic_id === undefined) &&
+            Number(quiz.concept_id) === Number(concept?.id),
+    );
+
+    const renderQuizCard = (quiz) => (
+        <QuizCard
+            key={quiz.id}
+            quiz={quiz}
+            onPreview={setPreviewingQuiz}
+            onEdit={setEditingQuiz}
+            onDelete={(selectedQuiz) => {
+                setDeleteError('');
+                setQuizToDelete(selectedQuiz);
+            }}
+            deleting={deleteProcessing && quizToDelete?.id === quiz.id}
+        />
+    );
+
+    const deleteQuiz = () => {
+        if (!quizToDelete || deleteProcessing) return Promise.resolve();
+
+        const deletedQuizId = quizToDelete.id;
+        setDeleteProcessing(true);
+        setDeleteError('');
+
+        return new Promise((resolve, reject) => {
+            router.delete(destroyQuiz.url(deletedQuizId), {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    setDisplayedQuizzes((previousQuizzes) =>
+                        previousQuizzes.filter(
+                            (quiz) => quiz.id !== deletedQuizId,
+                        ),
+                    );
+                    setQuizToDelete(null);
+                    resolve();
+                },
+                onError: (errors) => {
+                    setDeleteError(
+                        errors.quiz ||
+                            errors.message ||
+                            'Unable to delete the quiz. Please try again.',
+                    );
+                    reject(new Error('Quiz deletion failed.'));
+                },
+                onFinish: () => setDeleteProcessing(false),
+            });
+        });
+    };
 
     const tabs = [
         { id: 'theory', label: 'Theory', icon: BookOpen },
@@ -224,6 +314,27 @@ export default function LessonTabs({ topic, quizzes = [], onUpdateTopic }) {
 
                 {activeTab === 'quiz' && (
                     <div className="space-y-5">
+                        <div className="space-y-3 border-b border-border pb-5">
+                            <div>
+                                <h3 className="text-lg font-semibold text-foreground">
+                                    Concept Quiz
+                                </h3>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Quizzes covering the full concept.
+                                </p>
+                            </div>
+
+                            {conceptQuizzes.length > 0 ? (
+                                <div className="space-y-3">
+                                    {conceptQuizzes.map(renderQuizCard)}
+                                </div>
+                            ) : (
+                                <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
+                                    No concept quiz created yet.
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                             <div>
                                 <h3 className="text-lg font-semibold text-foreground">
@@ -240,9 +351,7 @@ export default function LessonTabs({ topic, quizzes = [], onUpdateTopic }) {
 
                         {lessonQuizzes.length > 0 ? (
                             <div className="space-y-3">
-                                {lessonQuizzes.map((quiz) => (
-                                    <QuizCard key={quiz.id} quiz={quiz} />
-                                ))}
+                                {lessonQuizzes.map(renderQuizCard)}
                             </div>
                         ) : (
                             <QuizEmptyState />
@@ -289,6 +398,81 @@ export default function LessonTabs({ topic, quizzes = [], onUpdateTopic }) {
                     />
                 )}
             </div>
+
+            <ReviewModal
+                open={Boolean(previewingQuiz)}
+                onOpenChange={(open) => {
+                    if (!open) setPreviewingQuiz(null);
+                }}
+                onReviewed={(quizId, approvedQuestionIds) => {
+                    setDisplayedQuizzes((previousQuizzes) =>
+                        previousQuizzes.map((quiz) =>
+                            quiz.id === quizId
+                                ? {
+                                      ...quiz,
+                                      status: 'approved',
+                                      questions: (quiz.questions || [])
+                                          .filter((question) =>
+                                              approvedQuestionIds.includes(
+                                                  question.id,
+                                              ),
+                                          )
+                                          .map((question) => ({
+                                              ...question,
+                                              status: 'approved',
+                                          })),
+                                      questions_count:
+                                          approvedQuestionIds.length,
+                                  }
+                                : quiz,
+                        ),
+                    );
+                }}
+                quiz={previewingQuiz}
+            />
+
+            <ManualModal
+                open={Boolean(editingQuiz)}
+                onOpenChange={(open) => {
+                    if (!open) setEditingQuiz(null);
+                }}
+                onCreated={() => router.reload({ only: ['quizzes'] })}
+                topicId={
+                    editingQuiz?.topic_id !== null &&
+                    editingQuiz?.topic_id !== undefined
+                        ? topic?.id
+                        : null
+                }
+                conceptId={
+                    editingQuiz?.topic_id === null ||
+                    editingQuiz?.topic_id === undefined
+                        ? concept?.id
+                        : null
+                }
+                quiz={editingQuiz}
+            />
+
+            <DeleteModal
+                open={Boolean(quizToDelete)}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setQuizToDelete(null);
+                        setDeleteError('');
+                    }
+                }}
+                title="Delete Quiz?"
+                description="This will permanently delete the quiz and all of its questions."
+                cancelLabel="Cancel"
+                confirmLabel="Delete"
+                loading={deleteProcessing}
+                onConfirm={deleteQuiz}
+            >
+                {deleteError && (
+                    <p className="rounded-lg border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">
+                        {deleteError}
+                    </p>
+                )}
+            </DeleteModal>
         </section>
     );
 }

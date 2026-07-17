@@ -48,11 +48,6 @@ const navigationSections = [
                 href: classesIndex(),
                 icon: UsersRound,
             },
-            {
-                title: <TransText en="Quizzes" fr="Quizzes" ar="Quizzes" />,
-                href: quizesIndex(),
-                icon: FileQuestion,
-            },
         ],
     },
     {
