@@ -45,6 +45,11 @@ class ClassController extends Controller
         return $user->wakatime()->value("wakatime_key");
     }
 
+    private function userHasAnyRole(User $user, array $allowedRoles): bool
+    {
+        return $user->Roles()->whereIn('role', $allowedRoles)->exists();
+    }
+
     public function index()
     {
         $classes = Classes::orderBy("promo")->orderBy("class")->get()->all();
@@ -180,11 +185,37 @@ class ClassController extends Controller
             }
         }
 
+        $user = Auth::user();
+        $classTitle = trim(implode(' ', array_filter([
+            $class->type,
+            $class->class,
+            $class->promo ? 'Promo '.$class->promo : null,
+        ])));
+        $isHost = $coach && (int) $coach->id === (int) $user->id;
+        $canRecord = $isHost || $this->userHasAnyRole($user, ['admin', 'coach', 'super_admin']);
+        $canShareScreen = $isHost || $this->userHasAnyRole($user, ['admin', 'coach', 'super_admin']);
+        $roomName = 'academy-class-'.$class->id;
+
         return Inertia::render('classroom/sessions/[id]', [
             'data' => $data,
             'classroom' => [
                 'status' => 'pending',
-                'message' => 'Backend connection pending',
+                'message' => 'Jitsi video ready',
+            ],
+            'jitsiAccess' => [
+                'provider' => config('services.jitsi.provider'),
+                'domain' => config('services.jitsi.domain'),
+                'script_url' => config('services.jitsi.script_url'),
+                'room_name' => $roomName,
+                'display_name' => $user->name,
+                'is_host' => $isHost,
+                'can_share_screen' => $canShareScreen,
+                'can_record' => $canRecord,
+                'subject' => $classTitle ?: 'Classroom session',
+                'user_id' => $user->id,
+                'auth_enabled' => false,
+                'jwt' => null,
+                'expires_at' => null,
             ],
         ]);
     }

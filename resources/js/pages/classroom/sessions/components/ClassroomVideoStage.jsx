@@ -7,6 +7,7 @@ export default function ClassroomVideoStage({
     isDesktop,
     isFocusMode,
     session,
+    jitsiAccess,
     currentParticipant,
     currentUser,
     participants,
@@ -15,6 +16,9 @@ export default function ClassroomVideoStage({
     canJoin,
     isJoining,
     onJoin,
+    onJitsiApiReady,
+    onJitsiApiDisposed,
+    onJitsiMediaStateChange,
     isParticipantUpdating,
     isLeaving,
     areFocusControlsVisible,
@@ -47,6 +51,7 @@ export default function ClassroomVideoStage({
         >
             <MainVideoArea
                 session={session}
+                jitsiAccess={jitsiAccess}
                 currentParticipant={currentParticipant}
                 currentUser={currentUser}
                 participants={participants}
@@ -55,6 +60,12 @@ export default function ClassroomVideoStage({
                 canJoin={canJoin}
                 isJoining={isJoining}
                 onJoin={onJoin}
+                showNativeRecordingControl={
+                    isJoinedHostWithNativeRecordingControl
+                }
+                onJitsiApiReady={onJitsiApiReady}
+                onJitsiApiDisposed={onJitsiApiDisposed}
+                onJitsiMediaStateChange={onJitsiMediaStateChange}
             />
 
             <CustomControlBar
